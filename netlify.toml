@@ -1,0 +1,19 @@
+[images]
+  remote_images = ["https://source.unsplash.com/.*", "https://images.unsplash.com/.*", "https://ext.same-assets.com/.*", "https://ugc.same-assets.com/.*"]
+
+[build]
+  command = "bun run build"
+  publish = "out"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NEXT_PUBLIC_SUPABASE_URL = "https://idgopwzwgaebtubacyln.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkZ29wd3p3Z2FlYnR1YmFjeWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUzOTc2NjMsImV4cCI6MjA3MDk3MzY2M30.z3lBXkMmzuAZhCdwczQDIQXm_1w7BrDIecnlanp1jF4"
+  GOOGLE_CLIENT_ID = "208305766943-6h83caina8lgj9250pj37jo6gcasv8d4.apps.googleusercontent.com"
+  GOOGLE_CLIENT_SECRET = "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"
+  NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID = "208305766943-6h83caina8lgj9250pj37jo6gcasv8d4.apps.googleusercontent.com"
+  OAUTH_REDIRECT_URI = "https://skimly.dev/auth/callback"
+  REQUIRE_WAITLIST_APPROVAL = "false"
+  ALLOW_INVITED_LOGIN = "true"

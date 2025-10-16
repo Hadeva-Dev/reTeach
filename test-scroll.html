@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scroll Animation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .section {
+            min-height: 100vh;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .hero { background: linear-gradient(45deg, #e3f2fd, #f3e5f5); }
+        .problem { background: linear-gradient(45deg, #fff3e0, #fce4ec); }
+        .solution { background: linear-gradient(45deg, #e8f5e8, #e3f2fd); }
+        .testimonials { background: linear-gradient(45deg, #f3e5f5, #e8f5e8); }
+        .waitlist { background: linear-gradient(45deg, #fce4ec, #fff3e0); }
+        
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            z-index: 1000;
+        }
+        
+        h1 { color: #333; margin-bottom: 1rem; }
+        h2 { color: #666; }
+        
+        .test-info {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="status" id="scrollStatus">
+        <div>Scroll Progress: <span id="progress">0%</span></div>
+        <div>Current Section: <span id="section">hero</span></div>
+        <div>Animation Intensity: <span id="intensity">1.0</span></div>
+        <div>Color Shift: <span id="colorShift">0°</span></div>
+    </div>
+
+    <div class="section hero" id="hero">
+        <h1>Hero Section</h1>
+        <div class="test-info">
+            <h2>Expected Animation Behavior:</h2>
+            <ul>
+                <li>High energy animations (intensity: 1.2)</li>
+                <li>Blue/Purple/Pink color palette</li>
+                <li>Strong parallax movement</li>
+                <li>Maximum opacity and scale</li>
+            </ul>
+        </div>
+        <p>This section should have vibrant, energetic animations with blue and purple hues. As you scroll, the background should shift with strong parallax effects.</p>
+    </div>
+
+    <div class="section problem" id="problem">
+        <h1>Problem Section</h1>
+        <div class="test-info">
+            <h2>Expected Animation Behavior:</h2>
+            <ul>
+                <li>Calmer animations (intensity: 0.7)</li>
+                <li>Orange/Red/Yellow color palette</li>
+                <li>Moderate parallax movement</li>
+                <li>Reduced animation speed</li>
+            </ul>
+        </div>
+        <p>This section should have more subdued animations with warmer orange and red tones, representing the problems being discussed.</p>
+    </div>
+
+    <div class="section solution" id="solution">
+        <h1>Solution Section</h1>
+        <div class="test-info">
+            <h2>Expected Animation Behavior:</h2>
+            <ul>
+                <li>Moderate animations (intensity: 1.0)</li>
+                <li>Blue/Purple color return</li>
+                <li>Balanced parallax movement</li>
+                <li>Smooth transitions</li>
+            </ul>
+        </div>
+        <p>This section should return to cooler colors with balanced animation intensity, showing the solution to the problems.</p>
+    </div>
+
+    <div class="section testimonials" id="testimonials">
+        <h1>Testimonials Section</h1>
+        <div class="test-info">
+            <h2>Expected Animation Behavior:</h2>
+            <ul>
+                <li>Gentle animations (intensity: 0.9)</li>
+                <li>Cyan/Teal color palette</li>
+                <li>Soft parallax movement</li>
+                <li>Testimonial-friendly atmosphere</li>
+            </ul>
+        </div>
+        <p>This section should have gentle, trustworthy animations with cooler cyan and teal tones appropriate for testimonials.</p>
+    </div>
+
+    <div class="section waitlist" id="waitlist">
+        <h1>Waitlist Section</h1>
+        <div class="test-info">
+            <h2>Expected Animation Behavior:</h2>
+            <ul>
+                <li>High energy animations (intensity: 1.3)</li>
+                <li>Purple/Pink/Rose color palette</li>
+                <li>Strong call-to-action effects</li>
+                <li>Maximum animation intensity</li>
+            </ul>
+        </div>
+        <p>This section should have the most energetic animations with vibrant purple and pink hues to encourage action.</p>
+    </div>
+
+    <script>
+        // Simulate the scroll tracking logic from the React component
+        let scrollProgress = 0;
+        let currentSection = 'hero';
+        let animations = {
+            intensity: 1,
+            speed: 1,
+            colorShift: 0,
+            parallaxOffset: 0,
+            sectionOpacity: { hero: 1, problem: 0, solution: 0, testimonials: 0, waitlist: 0 }
+        };
+
+        function updateScrollAnimations() {
+            const scrollTop = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const scrollable = documentHeight - windowHeight;
+            
+            scrollProgress = Math.min(Math.max(scrollTop / scrollable, 0), 1);
+            
+            const sections = [
+                { name: 'hero', start: 0, end: 0.2 },
+                { name: 'problem', start: 0.2, end: 0.4 },
+                { name: 'solution', start: 0.4, end: 0.6 },
+                { name: 'testimonials', start: 0.6, end: 0.8 },
+                { name: 'waitlist', start: 0.8, end: 1.0 }
+            ];
+            
+            const activeSection = sections.find(section => 
+                scrollProgress >= section.start && scrollProgress < section.end
+            ) || sections[sections.length - 1];
+            
+            currentSection = activeSection.name;
+            
+            const baseIntensities = {
+                hero: 1.2,
+                problem: 0.7,
+                solution: 1.0,
+                testimonials: 0.9,
+                waitlist: 1.3
+            };
+            
+            animations = {
+                intensity: baseIntensities[currentSection] + Math.sin(scrollProgress * Math.PI * 4) * 0.2,
+                speed: 0.5 + (1 - Math.abs(scrollProgress - 0.5)) * 1.5,
+                colorShift: scrollProgress * 360,
+                parallaxOffset: scrollProgress * 100,
+                sectionOpacity: sections.reduce((acc, section) => {
+                    let opacity = 0;
+                    if (scrollProgress >= section.start && scrollProgress <= section.end) {
+                        const normalizedProgress = (scrollProgress - section.start) / (section.end - section.start);
+                        opacity = Math.sin(normalizedProgress * Math.PI);
+                    }
+                    acc[section.name] = opacity;
+                    return acc;
+                }, { hero: 0, problem: 0, solution: 0, testimonials: 0, waitlist: 0 })
+            };
+            
+            // Update status display
+            document.getElementById('progress').textContent = (scrollProgress * 100).toFixed(1) + '%';
+            document.getElementById('section').textContent = currentSection;
+            document.getElementById('intensity').textContent = animations.intensity.toFixed(2);
+            document.getElementById('colorShift').textContent = animations.colorShift.toFixed(0) + '°';
+            
+            // Apply visual effects to demonstrate the concept
+            document.body.style.filter = `hue-rotate(${animations.colorShift * 0.1}deg) brightness(${1 + animations.intensity * 0.1}) saturate(${1 + animations.intensity * 0.2})`;
+            document.body.style.transform = `translateY(${-animations.parallaxOffset * 0.1}px)`;
+        }
+
+        window.addEventListener('scroll', updateScrollAnimations, { passive: true });
+        updateScrollAnimations(); // Initial call
+        
+        console.log('Scroll animation test loaded. Check the status indicator in the top-right corner as you scroll.');
+    </script>
+</body>
+</html>
