@@ -180,7 +180,7 @@ class LLMService:
         )
 
         # Try to extract JSON from response
-        # Sometimes Claude wraps JSON in markdown code blocks
+        # Sometimes Claude wraps JSON in markdown code blocks or adds explanatory text
         response_text = response_text.strip()
 
         # Remove markdown code block if present
@@ -192,6 +192,14 @@ class LLMService:
             if lines and lines[-1].strip() == "```":
                 lines = lines[:-1]
             response_text = '\n'.join(lines).strip()
+
+        # Try to find JSON object in text (look for first { and last })
+        if not response_text.startswith('{') and not response_text.startswith('['):
+            # Search for JSON object
+            import re
+            json_match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', response_text)
+            if json_match:
+                response_text = json_match.group(1)
 
         try:
             return json.loads(response_text)

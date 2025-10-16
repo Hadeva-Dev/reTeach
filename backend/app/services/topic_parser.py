@@ -19,25 +19,72 @@ class TopicParserService:
     def __init__(self):
         self.llm = get_llm_service()
 
+    async def extract_prerequisites(self, syllabus_text: str) -> List[str]:
+        """
+        Extract prerequisites mentioned in syllabus using AI
+
+        Args:
+            syllabus_text: The course syllabus text
+
+        Returns:
+            List of prerequisite topics/skills
+        """
+        prompt = f"""Extract the prerequisite topics/skills mentioned in this course syllabus.
+
+Syllabus:
+{syllabus_text[:3000]}
+
+Task: Identify what prior knowledge or courses students need before taking this course.
+
+Common prerequisites include:
+- Math: Algebra, Geometry, Trigonometry, Calculus, Statistics
+- Science: Physics, Chemistry, Biology
+- Skills: Programming, Lab work, Writing
+
+Return ONLY this JSON (no other text):
+{{
+  "prerequisites": ["Algebra", "Calculus", "Scientific Notation"]
+}}
+
+If no prerequisites are mentioned, return empty array.
+"""
+
+        try:
+            result = await self.llm.generate_json(prompt, max_tokens=512)
+            prerequisites = result.get('prerequisites', [])
+
+            # Deduplicate and standardize
+            unique_prereqs = list(set(p.strip().title() for p in prerequisites if p.strip()))
+            return unique_prereqs
+
+        except Exception as e:
+            print(f"[TOPIC PARSER WARNING] Could not extract prerequisites: {e}")
+            return []
+
     async def parse_topics(
         self,
         syllabus_text: str,
         course_level: Optional[CourseLevel] = None
-    ) -> List[Topic]:
+    ) -> tuple[List[Topic], List[str]]:
         """
-        Extract topics from syllabus text using LLM
+        Extract topics and prerequisites from syllabus text using LLM
 
         Args:
             syllabus_text: The course syllabus text
             course_level: Educational level (hs, ug, grad)
 
         Returns:
-            List of extracted Topic objects
+            Tuple of (List of extracted Topic objects, List of prerequisites)
 
         Raises:
             ValueError: If LLM fails and fallback also fails
         """
         print(f"\n[TOPIC PARSER] Parsing topics from {len(syllabus_text)} chars of text...")
+
+        # Extract prerequisites first (using AI)
+        prerequisites = await self.extract_prerequisites(syllabus_text)
+        if prerequisites:
+            print(f"[TOPIC PARSER] Found prerequisites: {', '.join(prerequisites)}")
 
         # Create prompt
         prompt = topic_extraction_prompt(
@@ -66,7 +113,7 @@ class TopicParserService:
                 raise ValueError("No valid topics extracted")
 
             print(f"[TOPIC PARSER] Successfully extracted {len(topics)} topics")
-            return topics
+            return topics, prerequisites
 
         except Exception as e:
             print(f"[TOPIC PARSER ERROR] LLM extraction failed: {e}")
@@ -77,7 +124,7 @@ class TopicParserService:
             topics = [Topic(**item) for item in fallback_data]
 
             print(f"[TOPIC PARSER] Fallback extracted {len(topics)} topics")
-            return topics
+            return topics, prerequisites
 
     async def save_topics_to_db(
         self,
