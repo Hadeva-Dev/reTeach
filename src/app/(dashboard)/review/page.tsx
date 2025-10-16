@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import NavBar from '@/components/NavBar'
 import TopicList from '@/components/TopicList'
 import { generateQuestions } from '@/lib/api'
 import { useStore } from '@/lib/store'
@@ -20,7 +19,7 @@ export default function ReviewPage() {
   useEffect(() => {
     // Redirect if no topics
     if (topics.length === 0) {
-      router.push('/upload')
+      router.push('/create')
     }
   }, [topics, router])
 
@@ -49,19 +48,18 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <NavBar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => router.push('/upload')}
+            onClick={() => router.push('/create')}
             className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400
               hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
             aria-label="Back to upload"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Upload
+            Back to Creation
           </button>
 
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">

@@ -1,4 +1,5 @@
-import type { Topic, Question, TopicStat } from './schema'
+import type { Topic, Question, TopicStat, Preview } from './schema'
+import { fakePreview } from './fakeData'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api'
 
@@ -26,6 +27,9 @@ export async function generateQuestions(
   const questions: Question[] = []
   const topicsWithWeight = topics.filter(t => t.weight > 0)
 
+  const difficulties: Array<'easy' | 'med' | 'hard'> = ['easy', 'med', 'hard']
+  const bloomLevels = ['remember', 'understand', 'apply', 'analyze'] as const
+
   for (let i = 0; i < count; i++) {
     const topic = topicsWithWeight[i % topicsWithWeight.length]
     questions.push({
@@ -39,8 +43,8 @@ export async function generateQuestions(
         'Option D'
       ] as [string, string, string, string],
       answerIndex: Math.floor(Math.random() * 4),
-      difficulty: ['easy', 'med', 'hard'][Math.floor(Math.random() * 3)] as 'easy' | 'med' | 'hard',
-      bloom: ['remember', 'understand', 'apply', 'analyze'][Math.floor(Math.random() * 4)] as any
+      difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
+      bloom: bloomLevels[Math.floor(Math.random() * bloomLevels.length)]
     })
   }
 
@@ -72,4 +76,17 @@ export async function fetchResults(formId: string): Promise<TopicStat[]> {
     { topic: 'Advanced Topics', n: 45, correctPct: 52.8 },
     { topic: 'Applications', n: 45, correctPct: 71.3 }
   ]
+}
+
+export async function fetchPreview(formId: string): Promise<Preview> {
+  // Stub: Return composed preview payload
+  // In production: aggregate metrics + distribution via backend
+  await new Promise(resolve => setTimeout(resolve, 900))
+
+  return {
+    ...fakePreview,
+    id: formId,
+    title: fakePreview.title,
+    updatedAt: fakePreview.updatedAt
+  }
 }

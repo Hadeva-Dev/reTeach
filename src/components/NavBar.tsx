@@ -2,17 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileUp, ListChecks, Eye, Share2, BarChart3 } from 'lucide-react'
+import { Sparkles, BarChart3, LayoutDashboard } from 'lucide-react'
 
 export default function NavBar() {
   const pathname = usePathname()
 
   const navItems = [
-    { href: '/upload', label: 'Upload', icon: FileUp },
-    { href: '/review', label: 'Review', icon: ListChecks },
-    { href: '/preview', label: 'Preview', icon: Eye },
-    { href: '/publish', label: 'Publish', icon: Share2 },
-    { href: '/results', label: 'Results', icon: BarChart3 },
+    { href: '/dashboard', label: 'Diagnostics', icon: LayoutDashboard },
+    { href: '/create', label: 'Create', icon: Sparkles },
+    { href: '/results', label: 'Results', icon: BarChart3 }
   ]
 
   return (
@@ -58,7 +56,7 @@ export default function NavBar() {
 
         {/* Mobile menu (simplified - just show active page) */}
         <div className="md:hidden flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-          {navItems.find(item => item.href === pathname)?.label || 'Upload'}
+          {navItems.find(item => item.href === pathname)?.label || 'Menu'}
         </div>
       </div>
     </header>

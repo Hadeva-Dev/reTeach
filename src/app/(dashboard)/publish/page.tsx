@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import NavBar from '@/components/NavBar'
 import PublishCard from '@/components/PublishCard'
 import QRCodeCard from '@/components/QRCodeCard'
 import { useStore } from '@/lib/store'
@@ -30,7 +29,6 @@ export default function PublishPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <NavBar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import NavBar from '@/components/NavBar'
 import FileDrop from '@/components/FileDrop'
 import { parseTopics } from '@/lib/api'
 import { useStore } from '@/lib/store'
@@ -42,7 +41,6 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <NavBar />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">

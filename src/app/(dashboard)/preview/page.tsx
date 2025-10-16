@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import NavBar from '@/components/NavBar'
 import QuestionTable from '@/components/QuestionTable'
 import { createForm } from '@/lib/api'
 import { useStore } from '@/lib/store'
@@ -45,7 +44,6 @@ export default function PreviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <NavBar />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
