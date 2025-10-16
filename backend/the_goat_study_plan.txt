@@ -1,0 +1,93 @@
+======================================================================
+                    PERSONALIZED STUDY PLAN
+======================================================================
+
+Student: the goat
+Email: nga
+Generated: October 16, 2025 at 02:31 PM
+
+----------------------------------------------------------------------
+
+Total Estimated Study Time: 275 minutes (~4h 35m)
+Weak Topics to Study: 3
+
+======================================================================
+
+STEP 1: GEOMETRY
+Priority: MEDIUM
+Current Score: 40%
+----------------------------------------------------------------------
+
+STUDY RESOURCES:
+
+🌐 KHAN ACADEMY:
+  Title: Basic Geometry Introduction
+  URL: https://www.khanacademy.org/math/basic-geo
+  Time: ~45 minutes
+
+🌐 KHAN ACADEMY:
+  Title: High School Geometry
+  URL: https://www.khanacademy.org/math/geometry
+  Time: ~60 minutes
+
+⏱  Total Time for This Topic: 105 minutes
+
+======================================================================
+
+STEP 2: CALCULUS
+Priority: MEDIUM
+Current Score: 40%
+----------------------------------------------------------------------
+
+STUDY RESOURCES:
+
+🌐 KHAN ACADEMY:
+  Title: Calculus 1 Course
+  URL: https://www.khanacademy.org/math/calculus-1
+  Time: ~60 minutes
+
+🌐 KHAN ACADEMY:
+  Title: Derivatives Introduction
+  URL: https://www.khanacademy.org/math/calculus-1/cs1-derivatives-definition-and-basic-rules
+  Time: ~30 minutes
+
+🌐 KHAN ACADEMY:
+  Title: Limits and Continuity
+  URL: https://www.khanacademy.org/math/calculus-1/cs1-limits-and-continuity
+  Time: ~45 minutes
+
+⏱  Total Time for This Topic: 135 minutes
+
+======================================================================
+
+STEP 3: SYSTEMS OF EQUATIONS
+Priority: MEDIUM
+Current Score: 40%
+----------------------------------------------------------------------
+
+STUDY RESOURCES:
+
+🌐 KHAN ACADEMY:
+  Title: Systems of equations introduction
+  URL: https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:systems-of-equations/x2f8bb11595b61c86:introduction-to-systems-of-equations/v/solving-systems-of-equations-by-graphing
+  Time: ~15 minutes
+
+🌐 KHAN ACADEMY:
+  Title: Solving systems of equations by elimination
+  URL: https://www.khanacademy.org/math/algebra/x2f8bb11595b61c86:systems-of-equations/x2f8bb11595b61c86:solving-systems-elimination/v/solving-systems-of-equations-by-elimination
+  Time: ~20 minutes
+
+⏱  Total Time for This Topic: 35 minutes
+
+======================================================================
+
+
+----------------------------------------------------------------------
+NEXT STEPS:
+1. Follow this study plan in order
+2. Complete all readings and practice exercises
+3. Take the verification quiz to confirm mastery
+4. Review any questions you get wrong
+
+Good luck with your studies!
+----------------------------------------------------------------------
