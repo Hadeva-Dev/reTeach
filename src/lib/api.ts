@@ -35,14 +35,14 @@ export async function parseTopics(syllabusText: string): Promise<Topic[]> {
  */
 export async function generateQuestions(
   topics: Topic[],
-  count: number = 20,
+  _count: number = 20, // Unused - now always generates 3 per topic
   assessmentType: 'survey' | 'quiz' = 'quiz',
   textbookId?: string | null
 ): Promise<Question[]> {
   try {
-    // Calculate questions per topic - use ceiling to ensure we get at least the requested count
+    // Generate exactly 3 questions per topic
     const topicNames = topics.map(t => t.name)
-    const countPerTopic = Math.max(1, Math.ceil(count / topicNames.length))
+    const countPerTopic = 3
 
     // Use survey endpoint for survey type, questions endpoint for quiz
     const endpoint = assessmentType === 'survey'
@@ -53,7 +53,7 @@ export async function generateQuestions(
       topics: topicNames,
       count_per_topic: countPerTopic,
       difficulty: 'med',
-      total_count: count  // Send total count so backend can limit to exactly this number
+      total_count: topicNames.length * countPerTopic  // Total = 3 * number of topics
     }
 
     // If textbook ID is provided, include it for textbook-based generation
