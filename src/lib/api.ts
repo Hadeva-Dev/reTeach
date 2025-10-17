@@ -1,10 +1,13 @@
-import type { Topic, Question, TopicStat, Preview } from './schema'
+import type { Topic, Question, TopicStat, Preview, DiagnosticRow } from './schema'
 import { fakePreview } from './fakeData'
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:8000'
+
+const TEACHER_EMAIL = process.env.NEXT_PUBLIC_TEACHER_EMAIL
+const TEACHER_NAME = process.env.NEXT_PUBLIC_TEACHER_NAME
 
 /**
  * Parse topics from syllabus text using AI backend
@@ -102,22 +105,31 @@ export async function createForm(
   questions: Question[]
 ): Promise<{ formUrl: string; slug: string; formId: string }> {
   try {
+    const payload: Record<string, any> = {
+      title,
+      questions: questions.map(q => ({
+        id: q.id,
+        topic: q.topic,
+        stem: q.stem,
+        options: q.options,
+        answerIndex: q.answerIndex,
+        rationale: q.rationale,
+        difficulty: q.difficulty,
+        bloom: q.bloom
+      }))
+    }
+
+    if (TEACHER_EMAIL) {
+      payload.teacher_email = TEACHER_EMAIL
+      if (TEACHER_NAME) {
+        payload.teacher_name = TEACHER_NAME
+      }
+    }
+
     const response = await fetch(`${API_BASE_URL}/api/forms/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title,
-        questions: questions.map(q => ({
-          id: q.id,
-          topic: q.topic,
-          stem: q.stem,
-          options: q.options,
-          answerIndex: q.answerIndex,
-          rationale: q.rationale,
-          difficulty: q.difficulty,
-          bloom: q.bloom
-        }))
-      })
+      body: JSON.stringify(payload)
     })
 
     if (!response.ok) {
@@ -182,5 +194,84 @@ export async function fetchPreview(formId: string): Promise<Preview> {
     id: formId,
     title: fakePreview.title,
     updatedAt: fakePreview.updatedAt
+  }
+}
+
+export async function fetchDiagnosticsOverview(): Promise<DiagnosticRow[]> {
+  try {
+    const params = new URLSearchParams()
+    if (TEACHER_EMAIL) {
+      params.set('teacher_email', TEACHER_EMAIL)
+    }
+
+    const queryString = params.toString()
+    const response = await fetch(
+      `${API_BASE_URL}/api/forms${queryString ? `?${queryString}` : ''}`
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch diagnostics: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    return (data || []).map((item: any) => {
+      const slug = item.slug || item.id
+      const completionPct = Number(item.completion_pct ?? 0)
+      const weakTopics = Array.isArray(item.weak_topics)
+        ? item.weak_topics.filter(Boolean).slice(0, 3)
+        : []
+      const strongTopics = Array.isArray(item.strong_topics)
+        ? item.strong_topics.filter(Boolean).slice(0, 3)
+        : []
+
+      const status = item.status ?? 'active'
+
+      return {
+        id: slug,
+        slug,
+        formUuid: item.form_uuid || item.id || slug,
+        name: item.title || 'Untitled Diagnostic',
+        course: item.course || 'Course',
+        createdAt: item.created_at || new Date().toISOString(),
+        responses: Number(item.responses ?? 0),
+        completionPct: completionPct > 100 ? 100 : completionPct < 0 ? 0 : completionPct,
+        weakTopics,
+        strongTopics,
+        status: status === 'published' ? 'active' : status,
+        avgScore:
+          item.avg_score !== null && item.avg_score !== undefined
+            ? Number(item.avg_score)
+            : undefined,
+        lastSubmission: item.last_submission || undefined
+      } satisfies DiagnosticRow
+    })
+  } catch (error) {
+    console.error('Error fetching diagnostics:', error)
+    throw error
+  }
+}
+
+export async function deleteForm(slug: string): Promise<void> {
+  try {
+    const params = new URLSearchParams()
+    if (TEACHER_EMAIL) {
+      params.set('teacher_email', TEACHER_EMAIL)
+    }
+
+    const queryString = params.toString()
+    const response = await fetch(
+      `${API_BASE_URL}/api/forms/${slug}${queryString ? `?${queryString}` : ''}`,
+      {
+        method: 'DELETE'
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete form: ${response.statusText}`)
+    }
+  } catch (error) {
+    console.error(`Error deleting form ${slug}:`, error)
+    throw error
   }
 }

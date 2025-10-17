@@ -2,16 +2,24 @@
 
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Eye } from 'lucide-react'
+import { Search, Eye, Trash2, Loader2 } from 'lucide-react'
 import type { DiagnosticRow } from '@/lib/schema'
 
 interface DiagnosticsTableProps {
   rows: DiagnosticRow[]
   onRowClick: (row: DiagnosticRow) => void
   onView: (id: string) => void
+  onDelete?: (slug: string) => void
+  deletingId?: string | null
 }
 
-export default function DiagnosticsTable({ rows, onRowClick, onView }: DiagnosticsTableProps) {
+export default function DiagnosticsTable({
+  rows,
+  onRowClick,
+  onView,
+  onDelete,
+  deletingId
+}: DiagnosticsTableProps) {
   const [search, setSearch] = useState('')
 
   const filteredRows = useMemo(() => {
@@ -110,7 +118,24 @@ export default function DiagnosticsTable({ rows, onRowClick, onView }: Diagnosti
                   )}
                 </td>
                 <td className="py-4 px-6">
-                  <div className="flex items-center justify-end">
+                  <div className="flex items-center justify-end gap-2">
+                    {onDelete && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDelete(row.slug)
+                        }}
+                        disabled={deletingId === row.slug}
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-rose-400 disabled:cursor-not-allowed"
+                        aria-label={`Delete ${row.name}`}
+                      >
+                        {deletingId === row.slug ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
                     {row.responses > 0 && (
                       <button
                         onClick={(e) => {
@@ -155,6 +180,9 @@ export default function DiagnosticsTable({ rows, onRowClick, onView }: Diagnosti
                 <p className={`text-xl font-semibold ${getCompletionColor(row.completionPct)}`}>
                   {row.completionPct}%
                 </p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  {row.responses} students
+                </p>
               </div>
             </div>
             <div className="flex items-center justify-between">
@@ -172,18 +200,37 @@ export default function DiagnosticsTable({ rows, onRowClick, onView }: Diagnosti
                   <span className="text-xs text-gray-400">No data</span>
                 )}
               </div>
-              {row.responses > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onView(row.id)
-                  }}
-                  className="p-2 text-gray-600 dark:text-gray-400 rounded-lg"
-                  aria-label={`View ${row.name}`}
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {onDelete && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onDelete(row.slug)
+                    }}
+                    disabled={deletingId === row.slug}
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors disabled:cursor-not-allowed"
+                    aria-label={`Delete ${row.name}`}
+                  >
+                    {deletingId === row.slug ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+                {row.responses > 0 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onView(row.id)
+                    }}
+                    className="p-2 text-gray-600 dark:text-gray-400 rounded-lg"
+                    aria-label={`View ${row.name}`}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </motion.div>
         ))}

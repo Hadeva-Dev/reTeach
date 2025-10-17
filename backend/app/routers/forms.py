@@ -37,6 +37,23 @@ class PublishFormResponse(BaseModel):
     total_questions: int
 
 
+class FormSummary(BaseModel):
+    """Summary data for dashboard diagnostics list"""
+    id: str
+    slug: str
+    form_uuid: str
+    title: str
+    course: str
+    created_at: Optional[str]
+    responses: int
+    completion_pct: float
+    weak_topics: List[str]
+    strong_topics: List[str]
+    status: str
+    avg_score: Optional[float] = None
+    last_submission: Optional[str] = None
+
+
 class FormInfoResponse(BaseModel):
     """Public form information for students"""
     form_id: str
@@ -257,6 +274,200 @@ async def publish_form(request: PublishFormRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("", response_model=List[FormSummary])
+async def list_forms(teacher_email: Optional[EmailStr] = None):
+    """
+    List published forms with aggregated response statistics.
+    """
+    try:
+        teacher_id = None
+        if teacher_email:
+            teacher_result = db.client.table("teachers")\
+                .select("id")\
+                .eq("email", teacher_email.lower())\
+                .execute()
+
+            if not teacher_result.data:
+                return []
+
+            teacher_id = teacher_result.data[0]["id"]
+
+        forms_query = db.client.table("forms")\
+            .select("id, form_id, slug, title, status, publish_date, created_at, course_id")\
+            .order("publish_date", desc=True)\
+            .order("created_at", desc=True)
+
+        if teacher_id:
+            forms_query = forms_query.eq("teacher_id", teacher_id)
+
+        forms_result = forms_query.execute()
+        forms_data = forms_result.data or []
+
+        if not forms_data:
+            return []
+
+        course_cache: dict[str, str] = {}
+        summaries: List[FormSummary] = []
+
+        for form in forms_data:
+            # Only surface published/active diagnostics
+            status = form.get("status") or "draft"
+            if status != "published":
+                continue
+
+            form_uuid = form["id"]
+            slug = form.get("slug") or form.get("form_id") or str(form_uuid)
+
+            # Course lookup (cached)
+            course_id = form.get("course_id")
+            course_name = "General Diagnostic"
+            if course_id:
+                if course_id not in course_cache:
+                    course_result = db.client.table("courses")\
+                        .select("title")\
+                        .eq("id", course_id)\
+                        .limit(1)\
+                        .execute()
+
+                    if course_result.data:
+                        course_cache[course_id] = course_result.data[0].get("title") or "Course"
+                    else:
+                        course_cache[course_id] = "Course"
+
+                course_name = course_cache.get(course_id, "Course")
+
+            # Aggregate stats
+            stat_row = None
+            try:
+                summary_result = db.client.table("form_submission_summary")\
+                    .select("*")\
+                    .eq("form_id", form_uuid)\
+                    .limit(1)\
+                    .execute()
+                stat_row = summary_result.data[0] if summary_result.data else None
+            except Exception as stats_error:
+                print(f"[FORMS] Warning: summary view unavailable for form {slug}: {stats_error}")
+
+            # Total sessions (including in-progress)
+            session_result = db.client.table("form_sessions")\
+                .select("id", count="exact")\
+                .eq("form_id", form_uuid)\
+                .execute()
+
+            total_sessions = session_result.count or 0
+            completed = int(stat_row.get("total_submissions") or 0) if stat_row else 0
+            responses = completed
+            completion_pct = round((completed / total_sessions * 100), 1) if total_sessions else 0.0
+            if completion_pct > 100:
+                completion_pct = 100.0
+            if completion_pct < 0:
+                completion_pct = 0.0
+
+            avg_score = None
+            if stat_row and stat_row.get("average_score") is not None:
+                try:
+                    avg_score = float(stat_row.get("average_score"))
+                except (TypeError, ValueError):
+                    avg_score = None
+
+            # Weak topics (bottom 3 by correctness)
+            weak_topics: List[str] = []
+            strong_topics: List[str] = []
+            try:
+                topic_stats = db.client.rpc("get_form_topic_stats", {
+                    "form_uuid": form_uuid
+                }).execute()
+
+                topic_rows = topic_stats.data or []
+                topic_scores = [
+                    (
+                        row.get("topic_name"),
+                        float(row.get("correct_pct") or 0)
+                    )
+                    for row in topic_rows
+                    if row.get("topic_name")
+                ]
+
+                if topic_scores:
+                    weak_topics = [
+                        name for name, _ in sorted(topic_scores, key=lambda item: item[1])[:3]
+                    ]
+                    strong_topics = [
+                        name for name, _ in sorted(topic_scores, key=lambda item: item[1], reverse=True)[:3]
+                    ]
+            except Exception as e:
+                print(f"[FORMS] Warning: failed to load topic stats for {slug}: {e}")
+
+            created_at = form.get("publish_date") or form.get("created_at")
+
+            summaries.append(FormSummary(
+                id=slug,
+                slug=slug,
+                form_uuid=str(form_uuid),
+                title=form.get("title") or "Untitled Diagnostic",
+                course=course_name or "Course",
+                created_at=created_at,
+                responses=responses,
+                completion_pct=completion_pct,
+                weak_topics=weak_topics,
+                strong_topics=strong_topics,
+                status="active",
+                avg_score=avg_score,
+                last_submission=stat_row.get("latest_submission") if stat_row else None
+            ))
+
+        return summaries
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FORMS] Error listing forms: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list forms")
+
+
+@router.delete("/{slug}")
+async def delete_form(slug: str, teacher_email: Optional[EmailStr] = None):
+    """
+    Delete a published form and all associated records.
+    """
+    try:
+        form_result = db.client.table("forms")\
+            .select("id, teacher_id")\
+            .eq("slug", slug)\
+            .limit(1)\
+            .execute()
+
+        if not form_result.data:
+            raise HTTPException(status_code=404, detail="Form not found")
+
+        form = form_result.data[0]
+        form_uuid = form["id"]
+        teacher_id = form.get("teacher_id")
+
+        if teacher_email:
+            teacher_lookup = db.client.table("teachers")\
+                .select("id")\
+                .eq("email", teacher_email.lower())\
+                .limit(1)\
+                .execute()
+
+            if not teacher_lookup.data:
+                raise HTTPException(status_code=403, detail="Not authorized to delete this form")
+
+            if teacher_id and teacher_lookup.data[0]["id"] != teacher_id:
+                raise HTTPException(status_code=403, detail="Not authorized to delete this form")
+
+        db.client.table("forms").delete().eq("id", form_uuid).execute()
+
+        return {"status": "deleted", "slug": slug}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FORMS] Error deleting form {slug}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete form")
 
 
 @router.get("/{slug}", response_model=FormInfoResponse)

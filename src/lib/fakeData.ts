@@ -2,64 +2,93 @@ import type { DiagnosticRow, StudentFlag, TopicStat, Preview } from './schema'
 
 export const fakeDiagnostics: DiagnosticRow[] = [
   {
-    id: '1',
+    id: 'calculus-diagnostic',
+    slug: 'calculus-diagnostic',
+    formUuid: 'uuid-calculus-1',
     name: 'Calculus I - Limits & Derivatives',
     course: 'Math 101',
     createdAt: '2025-10-14',
     responses: 45,
     completionPct: 90,
     weakTopics: ['Chain Rule', 'Implicit Differentiation', 'Related Rates'],
-    status: 'active'
+    strongTopics: ['Limits', 'Derivatives', 'Integrals'],
+    status: 'active',
+    avgScore: 72.5,
+    lastSubmission: '2025-10-14T12:20:00Z'
   },
   {
-    id: '2',
+    id: 'python-data-structures',
+    slug: 'python-data-structures',
+    formUuid: 'uuid-python-1',
     name: 'Intro to Python - Data Structures',
     course: 'CS 150',
     createdAt: '2025-10-12',
     responses: 32,
     completionPct: 80,
     weakTopics: ['Linked Lists', 'Hash Tables', 'Recursion'],
-    status: 'active'
+    strongTopics: ['Lists', 'Trees', 'Stacks'],
+    status: 'active',
+    avgScore: 68.4,
+    lastSubmission: '2025-10-12T09:45:00Z'
   },
   {
-    id: '3',
+    id: 'biology-cell-structure',
+    slug: 'biology-cell-structure',
+    formUuid: 'uuid-bio-1',
     name: 'Biology - Cell Structure',
     course: 'Bio 200',
     createdAt: '2025-10-10',
     responses: 28,
     completionPct: 70,
     weakTopics: ['Mitochondria', 'Cell Membrane', 'Nucleus'],
-    status: 'active'
+    strongTopics: ['Ribosomes', 'Golgi Apparatus', 'Cytoplasm'],
+    status: 'active',
+    avgScore: 63.1,
+    lastSubmission: '2025-10-10T15:05:00Z'
   },
   {
-    id: '4',
+    id: 'chemistry-stoichiometry',
+    slug: 'chemistry-stoichiometry',
+    formUuid: 'uuid-chem-1',
     name: 'Chemistry - Stoichiometry',
     course: 'Chem 101',
     createdAt: '2025-10-08',
     responses: 15,
     completionPct: 38,
     weakTopics: ['Mole Conversions', 'Limiting Reagent', 'Percent Yield'],
-    status: 'active'
+    strongTopics: ['Stoichiometric Ratios', 'Balancing Equations'],
+    status: 'active',
+    avgScore: 42.8,
+    lastSubmission: '2025-10-08T11:30:00Z'
   },
   {
-    id: '5',
+    id: 'physics-kinematics',
+    slug: 'physics-kinematics',
+    formUuid: 'uuid-phys-1',
     name: 'Physics - Kinematics',
     course: 'Phys 101',
     createdAt: '2025-10-06',
     responses: 0,
     completionPct: 0,
     weakTopics: [],
-    status: 'active'
+    strongTopics: [],
+    status: 'active',
+    lastSubmission: null
   },
   {
-    id: '6',
+    id: 'history-world-war-one',
+    slug: 'history-world-war-one',
+    formUuid: 'uuid-hist-1',
     name: 'History - World War I',
     course: 'Hist 201',
     createdAt: '2025-09-28',
     responses: 42,
     completionPct: 95,
     weakTopics: ['Treaty of Versailles', 'Trench Warfare'],
-    status: 'archived'
+    strongTopics: ['Allied Strategy', 'Timeline of Events'],
+    status: 'archived',
+    avgScore: 81.9,
+    lastSubmission: '2025-09-28T10:12:00Z'
   }
 ]
 

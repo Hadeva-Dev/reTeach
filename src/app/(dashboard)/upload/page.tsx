@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import FileDrop from '@/components/FileDrop'
 import { parseTopics } from '@/lib/api'
 import { useStore } from '@/lib/store'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ArrowLeft } from 'lucide-react'
 
 export default function UploadPage() {
   const router = useRouter()
@@ -44,6 +44,16 @@ export default function UploadPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400
+              hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
+
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
             Upload Syllabus
           </h1>

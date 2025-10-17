@@ -26,13 +26,18 @@ export const TopicStat = z.object({
 
 export const DiagnosticRow = z.object({
   id: z.string(),
+  slug: z.string(),
+  formUuid: z.string(),
   name: z.string(),
   course: z.string(),
   createdAt: z.string(),
   responses: z.number().int().min(0),
   completionPct: z.number().min(0).max(100),
   weakTopics: z.array(z.string()).max(3),
-  status: z.enum(['active', 'archived']).default('active')
+  strongTopics: z.array(z.string()).max(3),
+  status: z.enum(['active', 'archived', 'draft', 'published']).default('active'),
+  avgScore: z.number().min(0).max(100).optional(),
+  lastSubmission: z.string().optional().nullable()
 })
 
 export const StudentFlag = z.object({

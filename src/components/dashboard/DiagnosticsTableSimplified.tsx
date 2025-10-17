@@ -20,7 +20,7 @@ export default function DiagnosticsTableSimplified({
 
   // Filter active diagnostics only
   const filteredRows = useMemo(() => {
-    const active = rows.filter(r => r.status === 'active')
+    const active = rows.filter(r => r.status === 'active' || r.status === 'published')
 
     if (search) {
       const searchLower = search.toLowerCase()

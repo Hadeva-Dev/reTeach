@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Eye, Edit, Archive, Calendar, Users, Target, AlertTriangle, BookOpen } from 'lucide-react'
+import { X, Eye, Edit, Trash2, Calendar, Users, Target, AlertTriangle, BookOpen, Loader2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import type { DiagnosticRow, TopicStat } from '@/lib/schema'
 
@@ -9,20 +9,24 @@ interface DiagSidePanelProps {
   open: boolean
   diag: DiagnosticRow | null
   miniStats: TopicStat[]
+  loadingTopics?: boolean
   onClose: () => void
   onViewResults: () => void
   onEdit: () => void
-  onArchive: () => void
+  onDelete: () => void
+  deletingId?: string | null
 }
 
 export default function DiagSidePanel({
   open,
   diag,
   miniStats,
+  loadingTopics = false,
   onClose,
   onViewResults,
   onEdit,
-  onArchive
+  onDelete,
+  deletingId
 }: DiagSidePanelProps) {
   if (!diag) return null
 
@@ -77,9 +81,6 @@ export default function DiagSidePanel({
                       <BookOpen className="w-3 h-3" />
                       {diag.course}
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 px-2 py-0.5 bg-gray-50 dark:bg-gray-800">
-                      Sample Data
-                    </span>
                   </div>
                 </div>
                 <button
@@ -104,6 +105,12 @@ export default function DiagSidePanel({
                   <Users className="w-3.5 h-3.5" />
                   {diag.responses} responses
                 </span>
+                {typeof diag.avgScore === 'number' && (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+                    <Target className="w-3.5 h-3.5" />
+                    Avg score {diag.avgScore.toFixed(1)}%
+                  </span>
+                )}
               </div>
 
               {/* Completion */}
@@ -153,7 +160,14 @@ export default function DiagSidePanel({
               )}
 
               {/* Mini Chart */}
-              {miniStats.length > 0 && (
+              {loadingTopics && (
+                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading topic performance...
+                </div>
+              )}
+
+              {!loadingTopics && miniStats.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
                     Performance Overview
@@ -215,6 +229,12 @@ export default function DiagSidePanel({
                 </div>
               )}
 
+              {!loadingTopics && miniStats.length === 0 && diag.responses > 0 && (
+                <div className="rounded-xl border border-gray-200/70 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-4 text-sm text-gray-600 dark:text-gray-400">
+                  Topic-level stats will appear once responses are processed.
+                </div>
+              )}
+
               {/* Actions */}
               <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-800">
                 {diag.responses > 0 && (
@@ -234,11 +254,16 @@ export default function DiagSidePanel({
                   Edit Diagnostic
                 </button>
                 <button
-                  onClick={onArchive}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-medium shadow-sm hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-gray-800 transition-all"
+                  onClick={onDelete}
+                  disabled={!!deletingId && diag.slug === deletingId}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 text-rose-600 dark:text-rose-300 font-medium shadow-sm hover:border-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all disabled:cursor-not-allowed"
                 >
-                  <Archive className="w-4 h-4" />
-                  Archive
+                  {deletingId && diag.slug === deletingId ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  Delete Diagnostic
                 </button>
               </div>
             </div>

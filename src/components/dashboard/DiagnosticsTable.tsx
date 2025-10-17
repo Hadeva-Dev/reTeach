@@ -38,8 +38,9 @@ export default function DiagnosticsTable({
   // Filter and sort
   const filteredRows = useMemo(() => {
     const filtered = rows.filter(row => {
+      const normalizedStatus = row.status === 'published' ? 'active' : row.status
       // Status filter
-      if (statusFilter !== 'all' && row.status !== statusFilter) return false
+      if (statusFilter !== 'all' && normalizedStatus !== statusFilter) return false
 
       // Course filter
       if (courseFilter !== 'all' && row.course !== courseFilter) return false
@@ -104,7 +105,7 @@ export default function DiagnosticsTable({
           Your Diagnostics
         </h2>
         <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800">
-          Sample Data
+          Live Data
         </span>
       </div>
 

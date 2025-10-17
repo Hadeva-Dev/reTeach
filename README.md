@@ -78,7 +78,10 @@ Currently uses stub functions in \`lib/api.ts\`. To connect to a real backend:
 Create \`.env.local\`:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+# Email/name used to scope dashboard diagnostics to your account
+NEXT_PUBLIC_TEACHER_EMAIL=teacher@example.com
+NEXT_PUBLIC_TEACHER_NAME="Prof. Example"
 ```
 
 ## License
