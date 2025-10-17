@@ -3,23 +3,37 @@ LLM Prompt Templates
 Centralized prompt definitions for Claude API
 """
 
-from typing import Optional
+from typing import Optional, List
 
 
-def topic_extraction_prompt(syllabus_text: str, course_level: Optional[str] = None) -> str:
+def topic_extraction_prompt(
+    syllabus_text: str,
+    course_level: Optional[str] = None,
+    prerequisites: Optional[List[str]] = None
+) -> str:
     """
     Prompt for extracting topics from a syllabus
 
     Args:
         syllabus_text: The course syllabus text
         course_level: Educational level (hs, ug, grad)
+        prerequisites: Explicit or implied prerequisites detected in the syllabus
 
     Returns:
         Formatted prompt string
     """
     level_context = f"Educational level: {course_level}. " if course_level else ""
+    prereq_context = ""
+    if prerequisites:
+        prereq_items = "\n".join(f"- {item}" for item in prerequisites)
+        prereq_context = f"""
+Known prerequisites or implied prior knowledge:
+{prereq_items}
+
+Treat each prerequisite as an early topic in the list (lower weight ~0.5-0.8) and reference their IDs inside later topics' `prereqs` arrays. If prerequisites are implied but missing, add them as early topics."""
 
     return f"""Extract 5-8 prerequisite topics from this syllabus. {level_context}
+{prereq_context}
 
 Return ONLY a JSON array of objects with this exact structure:
 [
@@ -32,10 +46,11 @@ Return ONLY a JSON array of objects with this exact structure:
 ]
 
 Rules:
-- Use IDs like "t_001", "t_002", etc.
-- Prefer core concepts over minor details
-- Weight represents importance (0.5 to 2.0, default 1.0)
-- prereqs is an array of prerequisite topic IDs
+- Use sequential IDs like "t_001", "t_002", etc. Prerequisite topics should use the earliest IDs.
+- Prefer core concepts and prerequisite skills over minor details
+- Weight represents importance (0.5 to 2.0, default 1.0). Prerequisite topics should have lower weight than downstream topics.
+- `prereqs` must be an array of prerequisite topic IDs (from the same list). Do not reference IDs that do not exist.
+- Every non-prerequisite topic should declare the prerequisite IDs it depends on.
 - Avoid duplicates
 - Return ONLY the JSON array, no other text
 
@@ -48,6 +63,7 @@ def question_generation_prompt(
     count: int,
     course_level: Optional[str] = None,
     difficulty: Optional[str] = None,
+    context: Optional[str] = None,
 ) -> str:
     """
     Prompt for generating MCQ questions for a topic
@@ -57,16 +73,18 @@ def question_generation_prompt(
         count: Number of questions to generate
         course_level: Educational level (hs, ug, grad)
         difficulty: Target difficulty (easy, med, hard)
+        context: Additional context (e.g., textbook information)
 
     Returns:
         Formatted prompt string
     """
     level_context = f"Audience: {course_level}. " if course_level else ""
     difficulty_context = f"Target difficulty: {difficulty}. " if difficulty else ""
+    context_note = f"\nContext: {context}\n" if context else ""
 
     return f"""Create {count} multiple-choice diagnostic questions for the topic: "{topic}".
 
-{level_context}{difficulty_context}
+{level_context}{difficulty_context}{context_note}
 
 Return ONLY a JSON array of question objects with this EXACT structure:
 [

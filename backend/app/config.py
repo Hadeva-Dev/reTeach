@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     cache_dir: Path = Path(".cache")
     cache_enabled: bool = True
 
+    # File Uploads
+    upload_dir: Path = Path("uploads")
+    max_upload_size_mb: int = 50
+
     # CORS
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
@@ -51,6 +55,8 @@ class Settings(BaseSettings):
         # Ensure cache directory exists
         if self.cache_enabled:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # Ensure upload directory exists
+        self.upload_dir.mkdir(parents=True, exist_ok=True)
 
 
 @lru_cache()

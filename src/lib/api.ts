@@ -1,54 +1,96 @@
 import type { Topic, Question, TopicStat, Preview } from './schema'
 import { fakePreview } from './fakeData'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+/**
+ * Parse topics from syllabus text using AI backend
+ */
 export async function parseTopics(syllabusText: string): Promise<Topic[]> {
-  // Stub: Return sample topics for demo
-  // In production: POST to backend AI service
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  try {
+    const response = await fetch(`${API_BASE}/api/topics/parse`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        syllabus_text: syllabusText,
+        course_level: 'ug' // undergraduate
+      })
+    })
 
-  return [
-    { id: '1', name: 'Introduction to Course', weight: 0.1, prereqs: [] },
-    { id: '2', name: 'Core Concepts', weight: 0.3, prereqs: ['1'] },
-    { id: '3', name: 'Advanced Topics', weight: 0.4, prereqs: ['2'] },
-    { id: '4', name: 'Applications', weight: 0.2, prereqs: ['3'] }
-  ]
+    if (!response.ok) {
+      throw new Error(`Failed to parse topics: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data.topics || []
+
+  } catch (error) {
+    console.error('Error parsing topics:', error)
+    throw error
+  }
 }
 
+/**
+ * Generate MCQ questions for given topics using AI backend
+ */
 export async function generateQuestions(
   topics: Topic[],
-  count: number = 20
+  count: number = 20,
+  assessmentType: 'survey' | 'quiz' = 'quiz',
+  textbookId?: string | null
 ): Promise<Question[]> {
-  // Stub: Return sample questions for demo
-  // In production: POST to backend AI service
-  await new Promise(resolve => setTimeout(resolve, 1500))
+  try {
+    // Calculate questions per topic
+    const topicNames = topics.map(t => t.name)
+    const countPerTopic = Math.max(1, Math.floor(count / topicNames.length))
 
-  const questions: Question[] = []
-  const topicsWithWeight = topics.filter(t => t.weight > 0)
+    // Use survey endpoint for survey type, questions endpoint for quiz
+    const endpoint = assessmentType === 'survey'
+      ? `${API_BASE}/api/survey/generate`
+      : `${API_BASE}/api/questions/generate`
 
-  const difficulties: Array<'easy' | 'med' | 'hard'> = ['easy', 'med', 'hard']
-  const bloomLevels = ['remember', 'understand', 'apply', 'analyze'] as const
+    const requestBody: any = {
+      topics: topicNames,
+      count_per_topic: countPerTopic,
+      difficulty: 'med'
+    }
 
-  for (let i = 0; i < count; i++) {
-    const topic = topicsWithWeight[i % topicsWithWeight.length]
-    questions.push({
-      id: `q${i + 1}`,
-      topic: topic.name,
-      stem: `Sample question ${i + 1} about ${topic.name}?`,
-      options: [
-        'Option A',
-        'Option B',
-        'Option C',
-        'Option D'
-      ] as [string, string, string, string],
-      answerIndex: Math.floor(Math.random() * 4),
-      difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
-      bloom: bloomLevels[Math.floor(Math.random() * bloomLevels.length)]
+    // If textbook ID is provided, include it for textbook-based generation
+    if (textbookId) {
+      requestBody.textbook_id = textbookId
+      requestBody.use_textbook = true
+    }
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
     })
-  }
 
-  return questions
+    if (!response.ok) {
+      throw new Error(`Failed to generate questions: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Transform backend response to match frontend schema
+    const questions = (data.questions || []).map((q: any) => ({
+      id: q.id,
+      topic: q.topic,
+      stem: q.stem,
+      options: q.options.slice(0, 4) as [string, string, string, string],
+      answerIndex: q.answerIndex,
+      rationale: q.rationale,
+      difficulty: q.difficulty,
+      bloom: q.bloom
+    }))
+
+    return questions
+
+  } catch (error) {
+    console.error('Error generating questions:', error)
+    throw error
+  }
 }
 
 export async function createForm(

@@ -13,6 +13,9 @@ interface PromptConfig {
   gradeLevel: string
   questionCount: number
   notes: string
+  assessmentType: 'survey' | 'quiz'
+  useTextbookPdf: boolean
+  textbookFile: File | null
 }
 
 interface DiagnosticFormProps {
@@ -25,6 +28,42 @@ interface DiagnosticFormProps {
 export default function DiagnosticForm({ config, onConfigChange, promptCharacters, error }: DiagnosticFormProps) {
   return (
     <form className="space-y-8">
+      <section>
+        <SectionHeader title="Assessment Type" />
+        <div className="mt-3 space-y-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => onConfigChange('assessmentType', 'survey')}
+              className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                config.assessmentType === 'survey'
+                  ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-indigo-400'
+              }`}
+            >
+              <div className="font-semibold text-gray-900 dark:text-white">Diagnostic Survey</div>
+              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Informal yes/no questions to identify knowledge gaps
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => onConfigChange('assessmentType', 'quiz')}
+              className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                config.assessmentType === 'quiz'
+                  ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-indigo-400'
+              }`}
+            >
+              <div className="font-semibold text-gray-900 dark:text-white">Formal Quiz</div>
+              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Multiple-choice questions with detailed explanations
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section>
         <SectionHeader title="Overview" />
         <div className="mt-3 space-y-4">
@@ -69,7 +108,7 @@ export default function DiagnosticForm({ config, onConfigChange, promptCharacter
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="textbook" className="text-sm font-medium text-foreground/80">
-                Textbook
+                Textbook Name
               </label>
               <input
                 id="textbook"
@@ -77,6 +116,7 @@ export default function DiagnosticForm({ config, onConfigChange, promptCharacter
                 onChange={(e) => onConfigChange('textbook', e.target.value)}
                 placeholder="Stewart Calculus 8e"
                 className={inputClassName}
+                disabled={config.useTextbookPdf}
               />
             </div>
             <div>
@@ -103,6 +143,65 @@ export default function DiagnosticForm({ config, onConfigChange, promptCharacter
               placeholder="Ch.2.1, Ch.2.2, Ch.2.4"
               className={inputClassName}
             />
+          </div>
+
+          {/* Textbook PDF Upload Option */}
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                id="useTextbookPdf"
+                checked={config.useTextbookPdf}
+                onChange={(e) => {
+                  onConfigChange('useTextbookPdf', e.target.checked)
+                  if (!e.target.checked) {
+                    onConfigChange('textbookFile', null)
+                  }
+                }}
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <div className="flex-1">
+                <label htmlFor="useTextbookPdf" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+                  Upload Textbook PDF (Optional)
+                </label>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  AI will generate questions directly from your textbook content instead of searching the web
+                </p>
+
+                {config.useTextbookPdf && (
+                  <div className="mt-3">
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          if (file.type !== 'application/pdf') {
+                            alert('Please upload a PDF file')
+                            return
+                          }
+                          if (file.size > 50 * 1024 * 1024) {
+                            alert('File size must be less than 50MB')
+                            return
+                          }
+                          onConfigChange('textbookFile', file)
+                          // Auto-fill textbook name from filename
+                          if (!config.textbook) {
+                            onConfigChange('textbook', file.name.replace('.pdf', ''))
+                          }
+                        }
+                      }}
+                      className="text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-300"
+                    />
+                    {config.textbookFile && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        Selected: {config.textbookFile.name} ({(config.textbookFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </section>

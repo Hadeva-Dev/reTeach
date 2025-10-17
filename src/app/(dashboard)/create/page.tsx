@@ -28,6 +28,9 @@ interface PromptConfig {
   gradeLevel: string
   questionCount: number
   notes: string
+  assessmentType: 'survey' | 'quiz'
+  useTextbookPdf: boolean
+  textbookFile: File | null
 }
 
 const initialConfig: PromptConfig = {
@@ -37,7 +40,10 @@ const initialConfig: PromptConfig = {
   chapters: '',
   gradeLevel: 'Grade 10',
   questionCount: 20,
-  notes: ''
+  notes: '',
+  assessmentType: 'quiz',
+  useTextbookPdf: false,
+  textbookFile: null
 }
 
 export default function CreateDiagnosticPage() {
@@ -89,39 +95,83 @@ export default function CreateDiagnosticPage() {
       return
     }
 
+    // Validate textbook PDF if checkbox is checked
+    if (config.useTextbookPdf && !config.textbookFile) {
+      addNotification('Please upload a textbook PDF or uncheck the option', 'error')
+      return
+    }
+
     setLoading(true)
     setError(null)
 
     try {
-      const topicSeeds = [
-        config.focus,
-        ...config.chapters
-          .split(',')
-          .map((part) => part.trim())
-          .filter(Boolean)
-      ]
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+      let textbookId: string | null = null
 
-      const normalizedTopics: Topic[] = topicSeeds.slice(0, 3).map((topicName, index) => ({
-        id: `prompt-${index}`,
-        name: topicName,
-        weight: defaultWeights[index] ?? 0.25,
-        prereqs: []
-      }))
+      // If user uploaded a textbook PDF, upload it first and get topics from it
+      if (config.useTextbookPdf && config.textbookFile) {
+        const formData = new FormData()
+        formData.append('file', config.textbookFile)
 
-      if (normalizedTopics.length === 0) {
-        normalizedTopics.push({
-          id: 'prompt-0',
-          name: config.focus,
-          weight: 1,
-          prereqs: []
+        const uploadResponse = await fetch(`${API_BASE}/api/textbooks/upload`, {
+          method: 'POST',
+          body: formData
         })
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload textbook')
+        }
+
+        const uploadData = await uploadResponse.json()
+        textbookId = uploadData.textbook_id
+
+        // Use topics from textbook
+        const normalizedTopics: Topic[] = uploadData.topics.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          weight: t.weight,
+          prereqs: t.prereqs || []
+        }))
+
+        setTopics(normalizedTopics)
+
+        // Generate questions from textbook topics
+        const questions = await generateQuestions(normalizedTopics, config.questionCount, config.assessmentType, textbookId)
+        setQuestions(questions)
+      } else {
+        // Generate topics from manual prompt
+        const topicSeeds = [
+          config.focus,
+          ...config.chapters
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean)
+        ]
+
+        const normalizedTopics: Topic[] = topicSeeds.slice(0, 3).map((topicName, index) => ({
+          id: `prompt-${index}`,
+          name: topicName,
+          weight: defaultWeights[index] ?? 0.25,
+          prereqs: []
+        }))
+
+        if (normalizedTopics.length === 0) {
+          normalizedTopics.push({
+            id: 'prompt-0',
+            name: config.focus,
+            weight: 1,
+            prereqs: []
+          })
+        }
+
+        setTopics(normalizedTopics)
+
+        // Generate questions with AI web search
+        const questions = await generateQuestions(normalizedTopics, config.questionCount, config.assessmentType)
+        setQuestions(questions)
       }
 
-      setTopics(normalizedTopics)
-      const questions = await generateQuestions(normalizedTopics, config.questionCount)
-      setQuestions(questions)
-
-      router.push(`/review?title=${encodeURIComponent(config.title)}`)
+      router.push(`/review?title=${encodeURIComponent(config.title)}&type=${config.assessmentType}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate diagnostic')
     } finally {

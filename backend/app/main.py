@@ -8,6 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import db
 
+# Import routers
+from app.routers import topics, questions, surveys, forms, textbooks
+
 # Create FastAPI app
 app = FastAPI(
     title=settings.app_name,
@@ -19,11 +22,18 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(topics.router)
+app.include_router(questions.router)
+app.include_router(surveys.router)
+app.include_router(forms.router)
+app.include_router(textbooks.router)
 
 
 @app.get("/health")

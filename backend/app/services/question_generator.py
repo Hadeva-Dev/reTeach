@@ -25,6 +25,7 @@ class QuestionGeneratorService:
         count_per_topic: int = 5,
         difficulty: Optional[Difficulty] = None,
         course_level: Optional[CourseLevel] = None,
+        context: Optional[str] = None,
     ) -> List[Question]:
         """
         Generate MCQ questions for given topics
@@ -34,6 +35,7 @@ class QuestionGeneratorService:
             count_per_topic: Number of questions per topic
             difficulty: Target difficulty level
             course_level: Educational level
+            context: Additional context (e.g., textbook information)
 
         Returns:
             List of generated Question objects
@@ -42,6 +44,8 @@ class QuestionGeneratorService:
             ValueError: If generation fails
         """
         print(f"\n[QUESTION GEN] Generating {count_per_topic} questions for {len(topics)} topics...")
+        if context:
+            print(f"[QUESTION GEN] Using context: {context}")
 
         all_questions = []
         question_counter = 1
@@ -56,6 +60,7 @@ class QuestionGeneratorService:
                     count=count_per_topic,
                     course_level=course_level.value if course_level else None,
                     difficulty=difficulty.value if difficulty else None,
+                    context=context,
                 )
 
                 # Call LLM

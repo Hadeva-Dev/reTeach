@@ -114,11 +114,8 @@ export default function LandingPage() {
             className="text-center"
           >
             <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold mb-8 leading-tight text-gray-900">
-              <span className="block">Create Diagnostic</span>
-              <span className="block text-gradient-primary">Assessments</span>
-              <span className="block text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-medium text-gray-700 mt-2">
-                from Your Syllabus with <span className="text-gradient-accent">AI</span>
-              </span>
+              <span className="block">Only Good Vibes</span>
+              <span className="block text-gradient-primary">for Education</span>
             </h1>
             <p className="text-xl sm:text-2xl text-slate-600 mb-12 max-w-4xl mx-auto leading-relaxed">
               Extract topics. Generate questions. Analyze student understanding.

@@ -89,7 +89,8 @@ If no prerequisites are mentioned, return empty array.
         # Create prompt
         prompt = topic_extraction_prompt(
             syllabus_text=syllabus_text,
-            course_level=course_level.value if course_level else None
+            course_level=course_level.value if course_level else None,
+            prerequisites=prerequisites
         )
 
         try:
@@ -112,6 +113,8 @@ If no prerequisites are mentioned, return empty array.
             if not topics:
                 raise ValueError("No valid topics extracted")
 
+            topics = self._ensure_prerequisite_topics(topics, prerequisites)
+
             print(f"[TOPIC PARSER] Successfully extracted {len(topics)} topics")
             return topics, prerequisites
 
@@ -122,6 +125,7 @@ If no prerequisites are mentioned, return empty array.
             # Fallback to regex extraction
             fallback_data = fallback_topics_from_headings(syllabus_text)
             topics = [Topic(**item) for item in fallback_data]
+            topics = self._ensure_prerequisite_topics(topics, prerequisites)
 
             print(f"[TOPIC PARSER] Fallback extracted {len(topics)} topics")
             return topics, prerequisites
@@ -170,6 +174,65 @@ If no prerequisites are mentioned, return empty array.
         except Exception as e:
             print(f"[TOPIC PARSER ERROR] Failed to save topics: {e}")
             raise
+
+    def _generate_topic_id(self, existing_ids: set[str]) -> str:
+        """Generate the next available topic id."""
+        counter = 1
+        while True:
+            candidate = f"t_{counter:03d}"
+            if candidate not in existing_ids:
+                return candidate
+            counter += 1
+
+    def _ensure_prerequisite_topics(
+        self,
+        topics: List[Topic],
+        prerequisites: List[str]
+    ) -> List[Topic]:
+        """
+        Ensure prerequisites are represented in the topic list
+        and referenced by downstream topics.
+        """
+        if not prerequisites:
+            return topics
+
+        name_to_topic = {topic.name.lower(): topic for topic in topics}
+        existing_ids = {topic.id for topic in topics}
+        prereq_ids: list[str] = []
+
+        for prereq in prerequisites:
+            key = prereq.strip().lower()
+            if not key:
+                continue
+
+            if key in name_to_topic:
+                prereq_ids.append(name_to_topic[key].id)
+                continue
+
+            new_id = self._generate_topic_id(existing_ids)
+            new_topic = Topic(
+                id=new_id,
+                name=prereq.strip().title(),
+                weight=0.6,
+                prereqs=[]
+            )
+            topics.insert(0, new_topic)
+            name_to_topic[key] = new_topic
+            existing_ids.add(new_id)
+            prereq_ids.append(new_id)
+
+        valid_ids = {topic.id for topic in topics}
+        prereq_ids = [pid for pid in prereq_ids if pid in valid_ids]
+
+        for topic in topics:
+            topic.prereqs = [
+                pid for pid in topic.prereqs
+                if pid in valid_ids and pid != topic.id
+            ]
+            if prereq_ids and topic.id not in prereq_ids and not topic.prereqs:
+                topic.prereqs = prereq_ids[:3]
+
+        return topics
 
     async def _save_prerequisites(
         self,
