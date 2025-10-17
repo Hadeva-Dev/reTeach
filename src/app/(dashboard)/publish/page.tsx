@@ -1,10 +1,6 @@
 'use client'
 
-<<<<<<< HEAD
-import { useEffect, useMemo, useRef, useState } from 'react'
-=======
-import { useEffect, useState, Suspense } from 'react'
->>>>>>> fa217d915c40d518cf9c2cb2d818a2fc5f752a59
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import PublishCard from '@/components/PublishCard'
 import QRCodeCard from '@/components/QRCodeCard'
