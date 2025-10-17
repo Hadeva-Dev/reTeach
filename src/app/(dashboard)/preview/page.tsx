@@ -11,7 +11,7 @@ export default function PreviewPage() {
   const router = useRouter()
   const questions = useStore((state) => state.questions)
   const setQuestions = useStore((state) => state.setQuestions)
-  const setLinks = useStore((state) => state.setLinks)
+  const setPublishInfo = useStore((state) => state.setPublishInfo)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formTitle, setFormTitle] = useState('Diagnostic Assessment')
@@ -29,9 +29,14 @@ export default function PreviewPage() {
     setError(null)
 
     try {
-      const { formUrl, sheetUrl } = await createForm(formTitle, questions)
-      setLinks(formUrl, sheetUrl)
-      router.push('/publish')
+      const { formUrl, slug, formId } = await createForm(formTitle, questions)
+      setPublishInfo({ formUrl, formSlug: slug, formId })
+      const query = new URLSearchParams({
+        formUrl,
+        slug,
+        formId: formId ?? slug
+      })
+      router.push(`/publish?${query.toString()}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create form')
     } finally {

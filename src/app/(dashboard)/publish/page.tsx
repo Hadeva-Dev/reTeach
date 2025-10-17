@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import PublishCard from '@/components/PublishCard'
 import QRCodeCard from '@/components/QRCodeCard'
 import { useStore } from '@/lib/store'
@@ -9,22 +9,54 @@ import { ArrowLeft, BarChart3 } from 'lucide-react'
 
 export default function PublishPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const formUrl = useStore((state) => state.formUrl)
+  const formSlug = useStore((state) => state.formSlug)
+  const setPublishInfo = useStore((state) => state.setPublishInfo)
+  const [checkedQuery, setCheckedQuery] = useState(false)
+
+  const queryFormUrl = searchParams?.get('formUrl')
+  const querySlug = searchParams?.get('slug')
+  const queryFormId = searchParams?.get('formId')
 
   useEffect(() => {
-    // Redirect if no form URL
-    if (!formUrl) {
-      router.push('/upload')
+    if (formUrl && formSlug) {
+      setCheckedQuery(true)
+      return
     }
-  }, [formUrl, router])
 
-  if (!formUrl) {
-    return null // Will redirect
+    if (queryFormUrl && querySlug) {
+      setPublishInfo({
+        formUrl: queryFormUrl,
+        formSlug: querySlug,
+        formId: queryFormId ?? querySlug
+      })
+      setCheckedQuery(true)
+      return
+    }
+
+    if (!checkedQuery) {
+      setCheckedQuery(true)
+    }
+  }, [
+    formUrl,
+    formSlug,
+    queryFormUrl,
+    querySlug,
+    queryFormId,
+    setPublishInfo,
+    checkedQuery
+  ])
+
+  useEffect(() => {
+    if (checkedQuery && (!formUrl || !formSlug)) {
+      router.replace('/upload')
+    }
+  }, [checkedQuery, formUrl, formSlug, router])
+
+  if (!formUrl || !formSlug) {
+    return null // Either hydrating or redirecting
   }
-
-  // Extract form ID from URL for results page
-  const formIdMatch = formUrl.match(/\/([^/]+)$/)
-  const formId = formIdMatch ? formIdMatch[1] : 'demo'
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -92,7 +124,7 @@ export default function PublishPage() {
 
           {/* View Results Button */}
           <button
-            onClick={() => router.push(`/results?formId=${formId}`)}
+            onClick={() => router.push(`/results?formId=${formSlug}`)}
             className="w-full px-6 py-4 bg-gray-900 hover:bg-gray-800
               text-white font-semibold rounded-lg
               transition-all duration-200 shadow-lg hover:shadow-xl

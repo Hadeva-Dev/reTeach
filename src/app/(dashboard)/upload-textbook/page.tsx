@@ -4,8 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, FileText, Loader2, BookOpen, ArrowRight, X } from 'lucide-react'
 import { motion } from 'framer-motion'
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import { API_BASE_URL } from '@/lib/api'
 
 export default function UploadTextbookPage() {
   const router = useRouter()
@@ -87,7 +86,7 @@ export default function UploadTextbookPage() {
       formData.append('file', file)
 
       // Upload to backend and get auto-extracted topics
-      const response = await fetch(`${API_BASE}/api/textbooks/upload`, {
+      const response = await fetch(`${API_BASE_URL}/api/textbooks/upload`, {
         method: 'POST',
         body: formData
       })

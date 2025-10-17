@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, FileText, Check, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { API_BASE_URL } from '@/lib/api'
 
 interface Topic {
   id: string
@@ -36,15 +37,13 @@ export default function ReviewTopicsPage() {
       setLoading(true)
 
       // Fetch topics from backend (they were extracted during upload)
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
       if (!textbookId) {
         setError('No textbook ID provided')
         setLoading(false)
         return
       }
 
-      const response = await fetch(`${API_BASE}/api/textbooks/${textbookId}/topics`)
+      const response = await fetch(`${API_BASE_URL}/api/textbooks/${textbookId}/topics`)
 
       if (!response.ok) {
         throw new Error('Failed to fetch topics')

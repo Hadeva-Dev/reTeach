@@ -15,5 +15,5 @@ class CreateFormRequest(BaseModel):
 class CreateFormResponse(BaseModel):
     """POST /api/create-form response body"""
     formUrl: str = Field(..., description="URL to the created form")
-    sheetUrl: str = Field(..., description="URL to the response spreadsheet")
     formId: str = Field(..., description="Unique form identifier")
+    slug: str = Field(..., description="Form slug for student access")

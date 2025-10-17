@@ -5,11 +5,13 @@ interface Store {
   topics: Topic[]
   questions: Question[]
   formUrl: string | null
-  sheetUrl: string | null
+  formSlug: string | null
+  formId: string | null
 
   setTopics: (topics: Topic[]) => void
   setQuestions: (questions: Question[]) => void
-  setLinks: (formUrl: string, sheetUrl: string) => void
+  setPublishInfo: (info: { formUrl: string; formSlug: string; formId: string | null }) => void
+  clearPublishInfo: () => void
 
   addTopic: (topic: Topic) => void
   removeTopic: (topicId: string) => void
@@ -23,11 +25,13 @@ export const useStore = create<Store>((set) => ({
   topics: [],
   questions: [],
   formUrl: null,
-  sheetUrl: null,
+  formSlug: null,
+  formId: null,
 
   setTopics: (topics) => set({ topics }),
   setQuestions: (questions) => set({ questions }),
-  setLinks: (formUrl, sheetUrl) => set({ formUrl, sheetUrl }),
+  setPublishInfo: ({ formUrl, formSlug, formId }) => set({ formUrl, formSlug, formId }),
+  clearPublishInfo: () => set({ formUrl: null, formSlug: null, formId: null }),
 
   addTopic: (topic) => set((state) => ({
     topics: [...state.topics, topic]

@@ -613,6 +613,67 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/{slug}/stats")
+async def get_form_stats(slug: str):
+    """
+    Aggregated performance stats for teacher results dashboard.
+    """
+    try:
+        # Resolve slug to form record
+        form_result = db.client.table("forms")\
+            .select("id, form_id, title, status")\
+            .eq("slug", slug)\
+            .eq("status", "published")\
+            .execute()
+
+        if not form_result.data:
+            raise HTTPException(status_code=404, detail="Form not found")
+
+        form = form_result.data[0]
+        form_uuid = form["id"]
+
+        # Fetch topic-level stats via DB function
+        stats_result = db.client.rpc("get_form_topic_stats", {
+            "form_uuid": form_uuid
+        }).execute()
+
+        topic_rows = stats_result.data or []
+        topics = []
+        total_responses = 0
+
+        for row in topic_rows:
+            num_students = int(row.get("num_students") or 0)
+            correct_pct = row.get("correct_pct") or 0
+            try:
+                correct_pct = float(correct_pct)
+            except (TypeError, ValueError):
+                correct_pct = 0.0
+
+            total_responses += num_students
+
+            topics.append({
+                "topic_id": row.get("topic_id"),
+                "topic_name": row.get("topic_name"),
+                "num_students": num_students,
+                "num_questions": int(row.get("num_questions") or 0),
+                "correct_pct": correct_pct
+            })
+
+        return {
+            "form_id": form["form_id"],
+            "slug": slug,
+            "form_title": form["title"],
+            "total_responses": total_responses,
+            "topics": topics
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FORMS] Error fetching stats for form {slug}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch form stats")
+
+
 @router.get("/{form_id}/responses")
 async def get_form_responses(form_id: str):
     """

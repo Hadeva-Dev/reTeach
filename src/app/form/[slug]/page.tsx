@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, ClipboardList, CheckCircle } from 'lucide-react'
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import { API_BASE_URL } from '@/lib/api'
 
 interface FormInfo {
   form_id: string
@@ -52,7 +51,7 @@ export default function FormPage() {
     const fetchFormInfo = async () => {
       try {
         setLoading(true)
-        const response = await fetch(`${API_BASE}/api/forms/${slug}`)
+        const response = await fetch(`${API_BASE_URL}/api/forms/${slug}`)
 
         if (!response.ok) {
           throw new Error('Form not found')
@@ -83,7 +82,7 @@ export default function FormPage() {
     setError(null)
 
     try {
-      const response = await fetch(`${API_BASE}/api/forms/${slug}/start`, {
+      const response = await fetch(`${API_BASE_URL}/api/forms/${slug}/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), email: email.trim() })
@@ -111,7 +110,7 @@ export default function FormPage() {
   const fetchQuestions = async () => {
     setLoadingQuestions(true)
     try {
-      const response = await fetch(`${API_BASE}/api/forms/${slug}/questions`)
+      const response = await fetch(`${API_BASE_URL}/api/forms/${slug}/questions`)
 
       if (!response.ok) {
         throw new Error('Failed to load questions')
@@ -153,7 +152,7 @@ export default function FormPage() {
     setError(null)
 
     try {
-      const response = await fetch(`${API_BASE}/api/forms/${slug}/submit`, {
+      const response = await fetch(`${API_BASE_URL}/api/forms/${slug}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -7,7 +7,7 @@ import { Sparkles, BookOpen, ArrowLeft, Loader2, ArrowRight, HelpCircle } from '
 import DiagnosticForm from '@/components/DiagnosticForm'
 import HelpSidebar from '@/components/HelpSidebar'
 import NotificationPopup from '@/components/NotificationPopup'
-import { generateQuestions } from '@/lib/api'
+import { generateQuestions, API_BASE_URL } from '@/lib/api'
 import { useStore } from '@/lib/store'
 import type { Topic } from '@/lib/schema'
 
@@ -100,7 +100,6 @@ export default function CreateDiagnosticPage() {
     setError(null)
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
       let textbookId: string | null = null
 
       // If user uploaded a textbook PDF, upload it first and get topics from it
@@ -108,7 +107,7 @@ export default function CreateDiagnosticPage() {
         const formData = new FormData()
         formData.append('file', config.textbookFile)
 
-        const uploadResponse = await fetch(`${API_BASE}/api/textbooks/upload`, {
+        const uploadResponse = await fetch(`${API_BASE_URL}/api/textbooks/upload`, {
           method: 'POST',
           body: formData
         })

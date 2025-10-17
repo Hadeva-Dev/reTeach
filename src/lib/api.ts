@@ -1,14 +1,17 @@
 import type { Topic, Question, TopicStat, Preview } from './schema'
 import { fakePreview } from './fakeData'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:8000'
 
 /**
  * Parse topics from syllabus text using AI backend
  */
 export async function parseTopics(syllabusText: string): Promise<Topic[]> {
   try {
-    const response = await fetch(`${API_BASE}/api/topics/parse`, {
+    const response = await fetch(`${API_BASE_URL}/api/topics/parse`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -46,8 +49,8 @@ export async function generateQuestions(
 
     // Use survey endpoint for survey type, questions endpoint for quiz
     const endpoint = assessmentType === 'survey'
-      ? `${API_BASE}/api/survey/generate`
-      : `${API_BASE}/api/questions/generate`
+      ? `${API_BASE_URL}/api/survey/generate`
+      : `${API_BASE_URL}/api/questions/generate`
 
     const requestBody: any = {
       topics: topicNames,
@@ -97,9 +100,9 @@ export async function generateQuestions(
 export async function createForm(
   title: string,
   questions: Question[]
-): Promise<{ formUrl: string; sheetUrl: string; slug: string }> {
+): Promise<{ formUrl: string; slug: string; formId: string }> {
   try {
-    const response = await fetch(`${API_BASE}/api/forms/publish`, {
+    const response = await fetch(`${API_BASE_URL}/api/forms/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -129,8 +132,8 @@ export async function createForm(
 
     return {
       formUrl,
-      sheetUrl: formUrl, // For now, use same URL (results will be in dashboard)
-      slug: data.slug
+      slug: data.slug,
+      formId: data.form_id
     }
   } catch (error) {
     console.error('Error creating form:', error)
@@ -138,9 +141,13 @@ export async function createForm(
   }
 }
 
-export async function fetchResults(formId: string): Promise<TopicStat[]> {
+export async function fetchResults(formId: string): Promise<{
+  formTitle: string
+  totalResponses: number
+  topics: TopicStat[]
+}> {
   try {
-    const response = await fetch(`${API_BASE}/api/forms/${formId}/stats`)
+    const response = await fetch(`${API_BASE_URL}/api/forms/${formId}/stats`)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch results: ${response.statusText}`)
@@ -149,11 +156,15 @@ export async function fetchResults(formId: string): Promise<TopicStat[]> {
     const data = await response.json()
 
     // Transform backend response to match TopicStat schema
-    return (data.topics || []).map((topic: any) => ({
-      topic: topic.topic_name,
-      n: topic.total_responses,
-      correctPct: topic.correct_percentage
-    }))
+    return {
+      formTitle: data.form_title ?? 'Class Diagnostic',
+      totalResponses: data.total_responses ?? 0,
+      topics: (data.topics || []).map((topic: any) => ({
+        topic: topic.topic_name,
+        n: topic.num_students ?? topic.total_responses ?? 0,
+        correctPct: Number(topic.correct_pct ?? topic.correct_percentage ?? 0)
+      }))
+    }
 
   } catch (error) {
     console.error('Error fetching results:', error)
