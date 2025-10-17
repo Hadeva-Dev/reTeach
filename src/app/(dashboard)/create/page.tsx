@@ -89,11 +89,6 @@ export default function CreateDiagnosticPage() {
       return
     }
 
-    // Validate question count
-    if (config.questionCount < 5 || config.questionCount > 50) {
-      addNotification('Number of questions must be between 5 and 50', 'error')
-      return
-    }
 
     // Validate textbook PDF if checkbox is checked
     if (config.useTextbookPdf && !config.textbookFile) {
@@ -135,8 +130,9 @@ export default function CreateDiagnosticPage() {
 
         setTopics(normalizedTopics)
 
-        // Generate questions from textbook topics
-        const questions = await generateQuestions(normalizedTopics, config.questionCount, config.assessmentType, textbookId)
+        // Generate questions from textbook topics (5 per topic)
+        const totalQuestions = normalizedTopics.length * 5
+        const questions = await generateQuestions(normalizedTopics, totalQuestions, config.assessmentType, textbookId)
         setQuestions(questions)
       } else {
         // Generate topics from manual prompt
@@ -166,8 +162,9 @@ export default function CreateDiagnosticPage() {
 
         setTopics(normalizedTopics)
 
-        // Generate questions with AI web search
-        const questions = await generateQuestions(normalizedTopics, config.questionCount, config.assessmentType)
+        // Generate questions with AI web search (5 per topic)
+        const totalQuestions = normalizedTopics.length * 5
+        const questions = await generateQuestions(normalizedTopics, totalQuestions, config.assessmentType)
         setQuestions(questions)
       }
 
@@ -283,12 +280,12 @@ export default function CreateDiagnosticPage() {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Crafting {config.questionCount} questions...
+                      Crafting questions...
                     </>
                   ) : (
                     <>
                       <ArrowRight className="h-4 w-4" />
-                      Generate {config.questionCount} questions
+                      Generate questions
                     </>
                   )}
                 </button>

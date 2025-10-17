@@ -97,6 +97,25 @@ async def publish_form(request: PublishFormRequest):
         Form ID, slug, and shareable URL
     """
     try:
+        # Create or get default course
+        course_result = db.client.table("courses")\
+            .select("id")\
+            .eq("title", "Default Course")\
+            .execute()
+
+        if course_result.data:
+            course_id = course_result.data[0]["id"]
+        else:
+            # Create default course
+            new_course = db.client.table("courses").insert({
+                "title": "Default Course",
+                "course_level": "ug"
+            }).execute()
+            course_id = new_course.data[0]["id"] if new_course.data else None
+
+            if not course_id:
+                raise HTTPException(status_code=500, detail="Failed to create course")
+
         # Generate unique slug
         slug = generate_slug(request.title)
 
@@ -109,15 +128,12 @@ async def publish_form(request: PublishFormRequest):
         # Create form record
         form_data = {
             "form_id": f"form_{slug}",
+            "course_id": course_id,
             "title": request.title,
             "slug": slug,
             "status": "published",
             "publish_date": datetime.now().isoformat(),
         }
-
-        # Add course_id if provided
-        if request.course_id:
-            form_data["course_id"] = request.course_id
 
         form_result = db.client.table("forms").insert(form_data).execute()
 
@@ -127,9 +143,64 @@ async def publish_form(request: PublishFormRequest):
         form_record = form_result.data[0]
         form_uuid = form_record["id"]
 
-        # TODO: Store questions in database
-        # For now, we'll assume questions are already in the questions table
-        # In production, you'd link them via form_questions table
+        # Store each unique topic and create questions in proper tables
+        topic_map = {}  # topic name -> topic uuid
+
+        for question in request.questions:
+            topic_name = question.topic
+
+            # Get or create topic
+            if topic_name not in topic_map:
+                topic_result = db.client.table("topics")\
+                    .select("id")\
+                    .eq("course_id", course_id)\
+                    .eq("name", topic_name)\
+                    .execute()
+
+                if topic_result.data:
+                    topic_uuid = topic_result.data[0]["id"]
+                else:
+                    # Create new topic
+                    new_topic = db.client.table("topics").insert({
+                        "course_id": course_id,
+                        "topic_id": f"topic_{slug}_{len(topic_map)}",
+                        "name": topic_name,
+                        "weight": 1.0 / len(set(q.topic for q in request.questions))
+                    }).execute()
+                    topic_uuid = new_topic.data[0]["id"] if new_topic.data else None
+
+                    if not topic_uuid:
+                        raise HTTPException(status_code=500, detail=f"Failed to create topic: {topic_name}")
+
+                topic_map[topic_name] = topic_uuid
+
+        # Store questions in questions table and link to form
+        for idx, question in enumerate(request.questions):
+            topic_uuid = topic_map[question.topic]
+
+            # Create question in questions table
+            question_result = db.client.table("questions").insert({
+                "question_id": question.id,
+                "topic_id": topic_uuid,
+                "stem": question.stem,
+                "options": question.options,
+                "answer_index": question.answerIndex,
+                "rationale": question.rationale,
+                "difficulty": question.difficulty,
+                "bloom_level": question.bloom
+            }).execute()
+
+            if not question_result.data:
+                raise HTTPException(status_code=500, detail=f"Failed to create question {idx}")
+
+            question_uuid = question_result.data[0]["id"]
+
+            # Link question to form
+            db.client.table("form_questions").insert({
+                "form_id": form_uuid,
+                "question_id": question_uuid,
+                "order_index": idx
+            }).execute()
 
         # Build shareable URL
         base_url = "http://localhost:3000"  # TODO: Get from env
@@ -259,10 +330,39 @@ async def start_form_session(slug: str, student_info: StudentInfo, request: Requ
 
         session_uuid = session_result.data[0]["id"]
 
-        # Get questions for this form
-        # TODO: Implement proper question fetching
-        # For now, return empty array as placeholder
+        # Get form_questions with question IDs
+        form_questions_result = db.client.table("form_questions")\
+            .select("question_id, order_index")\
+            .eq("form_id", form_uuid)\
+            .order("order_index")\
+            .execute()
+
+        # Fetch full question details from questions table
         questions = []
+        for fq in form_questions_result.data:
+            question_result = db.client.table("questions")\
+                .select("question_id, topic_id, stem, options, answer_index")\
+                .eq("id", fq["question_id"])\
+                .execute()
+
+            if question_result.data:
+                q = question_result.data[0]
+
+                # Get topic name
+                topic_result = db.client.table("topics")\
+                    .select("name")\
+                    .eq("id", q["topic_id"])\
+                    .execute()
+
+                topic_name = topic_result.data[0]["name"] if topic_result.data else "Unknown Topic"
+
+                questions.append({
+                    "id": q["question_id"],
+                    "topic": topic_name,
+                    "stem": q["stem"],
+                    "options": q["options"],
+                    "answerIndex": q["answer_index"]
+                })
 
         return StartSessionResponse(
             session_id=str(session_uuid),
@@ -275,6 +375,90 @@ async def start_form_session(slug: str, student_info: StudentInfo, request: Requ
         raise
     except Exception as e:
         print(f"[FORMS] Error starting session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{slug}/questions")
+async def get_form_questions(slug: str):
+    """
+    Get questions for a form by slug
+
+    Students can fetch questions after starting a session.
+
+    Args:
+        slug: Form slug
+
+    Returns:
+        List of questions for the form
+    """
+    try:
+        # Get form by slug
+        form_result = db.client.table("forms")\
+            .select("id, title")\
+            .eq("slug", slug)\
+            .eq("status", "published")\
+            .execute()
+
+        if not form_result.data:
+            raise HTTPException(status_code=404, detail="Form not found")
+
+        form = form_result.data[0]
+        form_uuid = form["id"]
+
+        # Get form_questions with question IDs
+        form_questions_result = db.client.table("form_questions")\
+            .select("question_id, order_index")\
+            .eq("form_id", form_uuid)\
+            .order("order_index")\
+            .execute()
+
+        if not form_questions_result.data:
+            return {
+                "form_title": form["title"],
+                "total_questions": 0,
+                "questions": []
+            }
+
+        # Fetch full question details from questions table
+        questions = []
+        for fq in form_questions_result.data:
+            question_result = db.client.table("questions")\
+                .select("question_id, topic_id, stem, options, answer_index, rationale, difficulty, bloom_level")\
+                .eq("id", fq["question_id"])\
+                .execute()
+
+            if question_result.data:
+                q = question_result.data[0]
+
+                # Get topic name
+                topic_result = db.client.table("topics")\
+                    .select("name")\
+                    .eq("id", q["topic_id"])\
+                    .execute()
+
+                topic_name = topic_result.data[0]["name"] if topic_result.data else "Unknown Topic"
+
+                questions.append({
+                    "id": q["question_id"],
+                    "topic": topic_name,
+                    "stem": q["stem"],
+                    "options": q["options"],
+                    "answerIndex": q["answer_index"],
+                    "rationale": q.get("rationale"),
+                    "difficulty": q.get("difficulty"),
+                    "bloom": q.get("bloom_level")
+                })
+
+        return {
+            "form_title": form["title"],
+            "total_questions": len(questions),
+            "questions": questions
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FORMS] Error fetching questions: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

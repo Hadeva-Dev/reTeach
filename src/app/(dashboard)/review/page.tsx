@@ -14,7 +14,6 @@ export default function ReviewPage() {
   const setQuestions = useStore((state) => state.setQuestions)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [questionCount, setQuestionCount] = useState(20)
 
   useEffect(() => {
     // Redirect if no topics
@@ -28,7 +27,9 @@ export default function ReviewPage() {
     setError(null)
 
     try {
-      const questions = await generateQuestions(topics, questionCount)
+      // Generate 5 questions per topic
+      const totalQuestions = topics.length * 5
+      const questions = await generateQuestions(topics, totalQuestions)
       setQuestions(questions)
       router.push('/preview')
     } catch (err) {
@@ -42,9 +43,7 @@ export default function ReviewPage() {
     return null // Will redirect
   }
 
-  const totalWeight = topics.reduce((sum, t) => sum + t.weight, 0)
-  const isWeightValid = Math.abs(totalWeight - 1) < 0.01
-  const canGenerate = isWeightValid && !loading
+  const canGenerate = !loading && topics.length > 0
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -66,7 +65,7 @@ export default function ReviewPage() {
             Review Topics
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Adjust topic weights and add or remove topics. Weights should sum to 1.00.
+            Add or remove topics before generating questions.
           </p>
         </div>
 
@@ -74,30 +73,6 @@ export default function ReviewPage() {
           {/* Topic List */}
           <div className="card bg-white dark:bg-gray-900 p-6">
             <TopicList topics={topics} onChange={setTopics} />
-          </div>
-
-          {/* Question Count */}
-          <div className="card bg-white dark:bg-gray-900 p-6">
-            <label
-              htmlFor="question-count"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-            >
-              Number of questions to generate
-            </label>
-            <input
-              type="number"
-              id="question-count"
-              min="5"
-              max="50"
-              value={questionCount}
-              onChange={(e) => setQuestionCount(parseInt(e.target.value) || 20)}
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg
-                focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-            />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Recommended: 15-25 questions for a diagnostic assessment
-            </p>
           </div>
 
           {/* Error Message */}
@@ -121,18 +96,13 @@ export default function ReviewPage() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Generating {questionCount} Questions...
+                Generating {topics.length * 5} Questions...
               </>
             ) : (
-              `Generate ${questionCount} Questions`
+              `Generate ${topics.length * 5} Questions`
             )}
           </button>
 
-          {!isWeightValid && (
-            <p className="text-center text-sm text-amber-600 dark:text-amber-400">
-              ⚠ Adjust topic weights to sum to 1.00 before generating questions
-            </p>
-          )}
         </div>
       </main>
     </div>

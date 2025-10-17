@@ -12,13 +12,6 @@ interface TopicListProps {
 export default function TopicList({ topics, onChange }: TopicListProps) {
   const [newTopicName, setNewTopicName] = useState('')
 
-  const handleWeightChange = (topicId: string, weight: number) => {
-    const updated = topics.map(t =>
-      t.id === topicId ? { ...t, weight } : t
-    )
-    onChange(updated)
-  }
-
   const handleRemove = (topicId: string) => {
     const updated = topics.filter(t => t.id !== topicId)
     onChange(updated)
@@ -38,26 +31,13 @@ export default function TopicList({ topics, onChange }: TopicListProps) {
     setNewTopicName('')
   }
 
-  const totalWeight = topics.reduce((sum, t) => sum + t.weight, 0)
-  const isWeightValid = Math.abs(totalWeight - 1) < 0.01 // Allow 1% tolerance
-
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Topics ({topics.length})
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Total weight: {totalWeight.toFixed(2)}
-            {!isWeightValid && (
-              <span className="ml-2 text-amber-600 dark:text-amber-400 font-medium">
-                ⚠ Should sum to 1.00
-              </span>
-            )}
-          </p>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Topics ({topics.length})
+        </h3>
       </div>
 
       {/* Topic List */}
@@ -77,27 +57,6 @@ export default function TopicList({ topics, onChange }: TopicListProps) {
               <p className="font-medium text-gray-900 dark:text-white truncate">
                 {topic.name}
               </p>
-            </div>
-
-            {/* Weight Slider */}
-            <div className="flex items-center gap-3 min-w-[200px]">
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={topic.weight}
-                onChange={(e) => handleWeightChange(topic.id, parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer
-                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                  [&::-webkit-slider-thumb]:bg-blue-600 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
-                  [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:bg-blue-600
-                  [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                aria-label={`Weight for ${topic.name}`}
-              />
-              <span className="text-sm font-mono font-medium text-gray-700 dark:text-gray-300 w-12 text-right">
-                {(topic.weight * 100).toFixed(0)}%
-              </span>
             </div>
 
             {/* Delete Button */}

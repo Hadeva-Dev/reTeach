@@ -97,14 +97,44 @@ export async function generateQuestions(
 export async function createForm(
   title: string,
   questions: Question[]
-): Promise<{ formUrl: string; sheetUrl: string }> {
-  // Stub: Return sample URLs for demo
-  // In production: POST to backend Google Forms API
-  await new Promise(resolve => setTimeout(resolve, 1000))
+): Promise<{ formUrl: string; sheetUrl: string; slug: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/forms/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title,
+        questions: questions.map(q => ({
+          id: q.id,
+          topic: q.topic,
+          stem: q.stem,
+          options: q.options,
+          answer_index: q.answerIndex,
+          rationale: q.rationale,
+          difficulty: q.difficulty,
+          bloom: q.bloom
+        }))
+      })
+    })
 
-  return {
-    formUrl: `https://forms.google.com/sample/${Date.now()}`,
-    sheetUrl: `https://docs.google.com/spreadsheets/sample/${Date.now()}`
+    if (!response.ok) {
+      throw new Error(`Failed to publish form: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Build full URL for student access
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+    const formUrl = `${baseUrl}/form/${data.slug}`
+
+    return {
+      formUrl,
+      sheetUrl: formUrl, // For now, use same URL (results will be in dashboard)
+      slug: data.slug
+    }
+  } catch (error) {
+    console.error('Error creating form:', error)
+    throw error
   }
 }
 
