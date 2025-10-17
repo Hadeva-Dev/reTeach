@@ -1,10 +1,11 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ClipboardCheck, FileText, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function SelectAssessmentTypePage() {
+function SelectAssessmentTypePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const textbookTitle = searchParams?.get('title') || 'Uploaded Textbook'
@@ -183,5 +184,14 @@ export default function SelectAssessmentTypePage() {
         </div>
       </main>
     </div>
+  )
+}
+
+
+export default function SelectAssessmentTypePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SelectAssessmentTypePageContent />
+    </Suspense>
   )
 }
