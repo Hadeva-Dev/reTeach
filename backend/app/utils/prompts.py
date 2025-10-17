@@ -13,75 +13,83 @@ def topic_extraction_prompt(
     candidate_sections: Optional[List[str]] = None
 ) -> str:
     """
-    Prompt for extracting topics from a syllabus
+    Prompt for extracting PREREQUISITE topics from a syllabus
+
+    This extracts what students need to KNOW BEFORE taking the course,
+    NOT the topics taught IN the course.
 
     Args:
         syllabus_text: The course syllabus text
         course_level: Educational level (hs, ug, grad)
-        prerequisites: Explicit or implied prerequisites detected in the syllabus
-        candidate_sections: Headings/sections detected in the syllabus text
+        prerequisites: Explicit prerequisites detected in syllabus
+        candidate_sections: Ignored (not used for prerequisites)
 
     Returns:
-        Formatted prompt string
+        Formatted prompt string for LLM
     """
-    level_context = f"Educational level: {course_level}. " if course_level else ""
-    prereq_context = ""
-    if prerequisites:
-        prereq_items = "\n".join(f"- {item}" for item in prerequisites)
-        prereq_context = f"""
-Known prerequisites or implied prior knowledge:
-{prereq_items}
+    level_context = f"Course level: {course_level.upper()} (high school/undergraduate/graduate). " if course_level else ""
 
-Treat each prerequisite as an early topic in the list (lower weight ~0.5-0.8) and reference their IDs inside later topics' `prereqs` arrays. If prerequisites are implied but missing, add them as early topics."""
-    headings_context = ""
-    if candidate_sections:
-        heading_lines = "\n".join(f"- {item}" for item in candidate_sections)
-        headings_context = f"""
-Key sections/headings detected in the syllabus (use these exact phrases whenever possible):
-{heading_lines}
-"""
-
-    return f"""IMPORTANT: Extract ONLY the prerequisite knowledge and foundational skills needed BEFORE taking this course. DO NOT extract topics that are taught IN the course itself.
+    return f"""You are analyzing a course syllabus to identify PREREQUISITE knowledge that students must have BEFORE taking this course.
 
 {level_context}
-{prereq_context}
-{headings_context}
 
-Analyze this syllabus and identify 5-8 prerequisite topics that students must already know before starting this course. Look for:
-- Explicit prerequisites mentioned in the syllabus (e.g., "Prerequisites: Algebra, Trigonometry")
-- Implied prior knowledge (e.g., if the course uses calculus, then calculus concepts are prerequisites)
-- Foundational skills assumed but not taught (e.g., basic algebra for a physics course)
+Your task: Extract 6-12 specific prerequisite topics that students are expected to already know on day 1 of this course.
 
-DO NOT include topics that are the main content of this course. Only include what students should know BEFORE day 1.
+CRITICAL RULES:
+1. Extract ONLY prerequisites (prior knowledge required) - NOT topics taught in the course
+2. Look for the "Prerequisites:" section in the syllabus
+3. Infer foundational skills from course content (e.g., if course uses calculus, then calculus is a prerequisite)
+4. Break down broad prerequisites into specific testable skills
+5. Order topics from most fundamental to most advanced
 
-Return ONLY a JSON array of objects with this exact structure:
+EXAMPLE for an AP Physics course:
+- "Algebra" → Break into: "Linear equations", "Quadratic equations", "Systems of equations"
+- "Trigonometry" → Break into: "Right triangle trigonometry", "Unit circle", "Trigonometric identities"
+- "Calculus" → Break into: "Derivatives", "Integrals", "Chain rule"
+
+DO NOT INCLUDE course content like:
+- Topics listed under "Course content", "Units covered", "Specific topics include"
+- Labs, assignments, or activities
+- Skills that will be taught during the course
+
+Return ONLY a JSON array with this EXACT structure:
 [
   {{
     "id": "t_001",
-    "name": "Algebra fundamentals",
+    "name": "Linear equations and inequalities",
     "weight": 1.0,
     "prereqs": []
   }},
   {{
     "id": "t_002",
-    "name": "Trigonometric functions",
+    "name": "Quadratic equations and graphing",
     "weight": 1.2,
     "prereqs": ["t_001"]
+  }},
+  {{
+    "id": "t_003",
+    "name": "Right triangle trigonometry",
+    "weight": 1.5,
+    "prereqs": ["t_001"]
+  }},
+  {{
+    "id": "t_004",
+    "name": "Derivatives and differentiation",
+    "weight": 2.0,
+    "prereqs": ["t_002"]
   }}
 ]
 
-Rules:
-- CRITICAL: Extract ONLY prerequisites (what students need to know BEFORE the course), NOT course content
-- Use sequential IDs like "t_001", "t_002", etc.
-- Topic names should be specific prerequisite skills (e.g., "Quadratic equations", "Vector algebra", "Scientific notation")
-- Weight represents importance (0.5 to 2.0, default 1.0)
-- `prereqs` must be an array of prerequisite topic IDs that should be learned before this topic
-- If a prerequisite has its own prerequisites, include those dependencies
-- Avoid duplicates
-- Return ONLY the JSON array, no other text
+Field requirements:
+- "id": Sequential like "t_001", "t_002", etc.
+- "name": Specific, testable prerequisite skill (not vague like "math basics")
+- "weight": Importance 0.8-2.0 (higher = more critical for success)
+- "prereqs": Array of topic IDs that must be learned first (can be empty for foundational topics)
 
-Syllabus text:
-{syllabus_text}"""
+Output ONLY the JSON array. No markdown, no explanations, no extra text.
+
+SYLLABUS:
+{syllabus_text[:4000]}"""
 
 
 def question_generation_prompt(
