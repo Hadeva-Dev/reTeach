@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import PublishCard from '@/components/PublishCard'
 import QRCodeCard from '@/components/QRCodeCard'
 import { useStore } from '@/lib/store'
 import { ArrowLeft, BarChart3 } from 'lucide-react'
 
-export default function PublishPage() {
+function PublishPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const formUrl = useStore((state) => state.formUrl)
@@ -137,5 +137,13 @@ export default function PublishPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function PublishPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PublishPageContent />
+    </Suspense>
   )
 }
