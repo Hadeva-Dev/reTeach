@@ -27,8 +27,8 @@ export default function ReviewPage() {
     setError(null)
 
     try {
-      // Generate 5 questions per topic
-      const totalQuestions = topics.length * 5
+      // Generate 3 questions per topic
+      const totalQuestions = topics.length * 3
       const questions = await generateQuestions(topics, totalQuestions)
       setQuestions(questions)
       router.push('/preview')
@@ -96,10 +96,10 @@ export default function ReviewPage() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Generating {topics.length * 5} Questions...
+                Generating {topics.length * 3} Questions...
               </>
             ) : (
-              `Generate ${topics.length * 5} Questions`
+              `Generate ${topics.length * 3} Questions`
             )}
           </button>
 

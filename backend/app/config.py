@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
+    # Email/SMTP Configuration
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    bot_email: str = ""
+    bot_password: str = ""
+
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

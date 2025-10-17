@@ -74,12 +74,12 @@ export default function DashboardPageClient() {
   }, [diagnostics, selectedCourse])
 
   const readinessPct = useMemo(() => {
-    const withResponses = courseDiagnostics.filter((d) => d.responses > 0)
+    const withResponses = courseDiagnostics.filter((d) => d.responses > 0 && d.avgScore !== undefined)
     if (withResponses.length === 0) return 0
-    const avgCompletion =
-      withResponses.reduce((sum, d) => sum + d.completionPct, 0) /
+    const avgScore =
+      withResponses.reduce((sum, d) => sum + (d.avgScore ?? 0), 0) /
       withResponses.length
-    return Math.round(avgCompletion)
+    return Math.round(avgScore)
   }, [courseDiagnostics])
 
   const topWeakTopic = useMemo(() => {
