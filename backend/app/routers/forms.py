@@ -885,6 +885,82 @@ async def get_form_stats(slug: str):
         raise HTTPException(status_code=500, detail="Failed to fetch form stats")
 
 
+@router.get("/{slug}/stats")
+async def get_form_stats(slug: str):
+    """
+    Get topic-level statistics for a form by slug
+
+    Args:
+        slug: Form slug
+
+    Returns:
+        Topic statistics with response counts and correctness percentages
+    """
+    try:
+        # Get form by slug
+        form_result = db.client.table("forms")\
+            .select("id")\
+            .eq("slug", slug)\
+            .execute()
+
+        if not form_result.data:
+            raise HTTPException(status_code=404, detail="Form not found")
+
+        form_uuid = form_result.data[0]["id"]
+
+        # Get topic statistics from responses
+        # Group by topic and calculate correct percentage
+        responses = db.client.table("responses")\
+            .select("topic_id, is_correct, topics(name)")\
+            .eq("form_id", form_uuid)\
+            .execute()
+
+        if not responses.data:
+            return {"topics": []}
+
+        # Aggregate by topic
+        topic_stats = {}
+        for response in responses.data:
+            topic_id = response["topic_id"]
+            topic_name = response["topics"]["name"] if response.get("topics") else "Unknown Topic"
+            is_correct = response["is_correct"]
+
+            if topic_id not in topic_stats:
+                topic_stats[topic_id] = {
+                    "topic_name": topic_name,
+                    "total_responses": 0,
+                    "correct_responses": 0
+                }
+
+            topic_stats[topic_id]["total_responses"] += 1
+            if is_correct:
+                topic_stats[topic_id]["correct_responses"] += 1
+
+        # Calculate percentages
+        result_topics = []
+        for topic_id, stats in topic_stats.items():
+            correct_pct = (stats["correct_responses"] / stats["total_responses"] * 100) if stats["total_responses"] > 0 else 0
+            result_topics.append({
+                "topic_name": stats["topic_name"],
+                "total_responses": stats["total_responses"],
+                "correct_responses": stats["correct_responses"],
+                "correct_percentage": round(correct_pct, 1)
+            })
+
+        # Sort by topic name
+        result_topics.sort(key=lambda x: x["topic_name"])
+
+        return {"topics": result_topics}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[FORMS] Error fetching stats: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/{form_id}/responses")
 async def get_form_responses(form_id: str):
     """
@@ -912,4 +988,49 @@ async def get_form_responses(form_id: str):
 
     except Exception as e:
         print(f"[FORMS] Error fetching responses: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/students/all")
+async def get_all_students():
+    """
+    Get all students who have submitted forms
+
+    Returns:
+        List of students with their submission counts
+    """
+    try:
+        # Get all students with their submission counts
+        students = db.client.table("students")\
+            .select("id, email, name, created_at")\
+            .order("created_at", desc=True)\
+            .execute()
+
+        if not students.data:
+            return {"students": []}
+
+        # Get submission counts for each student
+        result_students = []
+        for student in students.data:
+            # Count completed sessions
+            sessions = db.client.table("form_sessions")\
+                .select("id", count="exact")\
+                .eq("student_id", student["id"])\
+                .not_.is_("completed_at", "null")\
+                .execute()
+
+            result_students.append({
+                "id": student["id"],
+                "email": student["email"],
+                "name": student["name"],
+                "created_at": student["created_at"],
+                "submissions_count": sessions.count or 0
+            })
+
+        return {"students": result_students}
+
+    except Exception as e:
+        print(f"[FORMS] Error fetching students: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

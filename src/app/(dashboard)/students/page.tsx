@@ -33,7 +33,7 @@ export default function StudentsPage() {
             Students
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Pulled from Google Form responses
+            Students who have submitted diagnostic forms
           </p>
         </section>
 

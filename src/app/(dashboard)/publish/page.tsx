@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import PublishCard from '@/components/PublishCard'
 import QRCodeCard from '@/components/QRCodeCard'
@@ -19,23 +19,32 @@ export default function PublishPage() {
   const querySlug = searchParams?.get('slug')
   const queryFormId = searchParams?.get('formId')
 
+  const hasQueryParams = useMemo(() => {
+    if (!searchParams) return false
+    const iterator = searchParams.keys()
+    return !iterator.next().done
+  }, [searchParams])
+
+  const hydrationAttemptedRef = useRef(false)
+
   useEffect(() => {
     if (formUrl && formSlug) {
+      hydrationAttemptedRef.current = true
       setCheckedQuery(true)
       return
     }
 
-    if (queryFormUrl && querySlug) {
+    if (!hydrationAttemptedRef.current && queryFormUrl && querySlug) {
       setPublishInfo({
         formUrl: queryFormUrl,
         formSlug: querySlug,
         formId: queryFormId ?? querySlug
       })
-      setCheckedQuery(true)
       return
     }
 
-    if (!checkedQuery) {
+    if (!hydrationAttemptedRef.current && !hasQueryParams) {
+      hydrationAttemptedRef.current = true
       setCheckedQuery(true)
     }
   }, [
@@ -44,6 +53,7 @@ export default function PublishPage() {
     queryFormUrl,
     querySlug,
     queryFormId,
+    hasQueryParams,
     setPublishInfo,
     checkedQuery
   ])

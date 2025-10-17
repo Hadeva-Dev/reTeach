@@ -1,43 +1,61 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Download, Eye, Search, Users, X, CheckCircle2, XCircle } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { Download, Eye, Search, Users, X, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 interface Student {
   id: string
   name: string
   email: string
-  lastSubmission: string | null
-  weakTopics: string[]
-  score?: number
-  questionsAttempted?: number
-  totalQuestions?: number
+  created_at: string
+  submissions_count: number
 }
-
-const MOCK_STUDENTS: Student[] = [
-  { id: '1', name: 'Alex Chen', email: 'alex.chen@school.edu', lastSubmission: '2025-10-13', weakTopics: ['Chain Rule', 'Implicit Diff'], score: 72, questionsAttempted: 18, totalQuestions: 25 },
-  { id: '2', name: 'Maya Lopez', email: 'maya.lopez@school.edu', lastSubmission: '2025-10-11', weakTopics: ['Cell Membrane'], score: 88, questionsAttempted: 22, totalQuestions: 25 },
-  { id: '3', name: 'Samir Patel', email: 'samir.patel@school.edu', lastSubmission: null, weakTopics: [] },
-  { id: '4', name: 'Jordan Kim', email: 'jordan.kim@school.edu', lastSubmission: '2025-10-15', weakTopics: ['Integration', 'L\'Hopital\'s Rule', 'Series'], score: 64, questionsAttempted: 16, totalQuestions: 25 },
-  { id: '5', name: 'Taylor Smith', email: 'taylor.smith@school.edu', lastSubmission: '2025-10-14', weakTopics: ['Vectors'], score: 92, questionsAttempted: 23, totalQuestions: 25 },
-]
 
 export default function StudentsTable() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [previewStudent, setPreviewStudent] = useState<Student | null>(null)
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch students from API
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`${API_BASE}/api/forms/students/all`)
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch students')
+        }
+
+        const data = await response.json()
+        setStudents(data.students || [])
+      } catch (err) {
+        console.error('Error fetching students:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load students')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStudents()
+  }, [])
 
   // Filter students based on search
   const filteredStudents = useMemo(() => {
-    if (!searchQuery.trim()) return MOCK_STUDENTS
+    if (!searchQuery.trim()) return students
     const query = searchQuery.toLowerCase()
-    return MOCK_STUDENTS.filter(
+    return students.filter(
       (s) =>
         s.name.toLowerCase().includes(query) ||
         s.email.toLowerCase().includes(query)
     )
-  }, [searchQuery])
+  }, [searchQuery, students])
 
   // Select all toggle
   const allSelected = filteredStudents.length > 0 && filteredStudents.every((s) => selectedIds.has(s.id))
@@ -100,6 +118,24 @@ export default function StudentsTable() {
     if (!dateStr) return '—'
     const date = new Date(dateStr)
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+        {error}
+      </div>
+    )
   }
 
   return (
@@ -178,10 +214,10 @@ export default function StudentsTable() {
                     Email
                   </th>
                   <th className="px-4 py-3.5 text-left text-sm font-medium text-gray-600 dark:text-gray-300 hidden lg:table-cell">
-                    Last Submission
+                    Joined
                   </th>
                   <th className="px-4 py-3.5 text-left text-sm font-medium text-gray-600 dark:text-gray-300 hidden md:table-cell">
-                    Weak Topics
+                    Submissions
                   </th>
                   <th className="px-4 py-3.5 text-right text-sm font-medium text-gray-600 dark:text-gray-300">
                     Actions
@@ -215,30 +251,12 @@ export default function StudentsTable() {
                     </td>
                     <td className="px-4 py-4 hidden lg:table-cell">
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        {formatDate(student.lastSubmission)}
+                        {formatDate(student.created_at)}
                       </div>
                     </td>
                     <td className="px-4 py-4 hidden md:table-cell">
-                      <div className="flex flex-wrap gap-1.5">
-                        {student.weakTopics.length === 0 ? (
-                          <span className="text-sm text-gray-400 dark:text-gray-600">—</span>
-                        ) : (
-                          <>
-                            {student.weakTopics.slice(0, 2).map((topic, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800"
-                              >
-                                {topic}
-                              </span>
-                            ))}
-                            {student.weakTopics.length > 2 && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                                +{student.weakTopics.length - 2}
-                              </span>
-                            )}
-                          </>
-                        )}
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {student.submissions_count}
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -317,58 +335,34 @@ export default function StudentsTable() {
 
                 {/* Content */}
                 <div className="p-4 space-y-3">
-                  {previewStudent.score !== undefined ? (
-                    <>
-                      {/* Score */}
-                      <div className={`rounded-lg p-3 text-center ${getScoreBg(previewStudent.score)}`}>
-                        <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                          Score
-                        </div>
-                        <div className={`text-3xl font-bold ${getScoreColor(previewStudent.score)}`}>
-                          {previewStudent.score}%
-                        </div>
-                      </div>
+                  {/* Stats */}
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Total Submissions
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {previewStudent.submissions_count}
+                    </div>
+                  </div>
 
-                      {/* Stats */}
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2.5">
-                        <div className="flex items-center gap-1 mb-1">
-                          <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
-                          <span className="text-xs text-gray-600 dark:text-gray-400">
-                            Questions Attempted
-                          </span>
-                        </div>
-                        <div className="text-base font-semibold text-gray-900 dark:text-white">
-                          {previewStudent.questionsAttempted}/{previewStudent.totalQuestions}
-                        </div>
-                      </div>
+                  {/* Joined Date */}
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                    <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                      Joined
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {formatDate(previewStudent.created_at)}
+                    </div>
+                  </div>
 
-                      {/* Weak Topics */}
-                      {previewStudent.weakTopics.length > 0 && (
-                        <div>
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <XCircle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                            <span className="text-xs font-medium text-gray-900 dark:text-white">
-                              Weak Topics
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {previewStudent.weakTopics.map((topic, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200"
-                              >
-                                {topic}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-center py-6">
+                  {previewStudent.submissions_count === 0 && (
+                    <div className="text-center py-4">
                       <Users className="w-8 h-8 text-gray-300 dark:text-gray-700 mx-auto mb-2" />
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        No quiz data available
+                        No submissions yet
                       </p>
                     </div>
                   )}
