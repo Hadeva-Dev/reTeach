@@ -4,7 +4,7 @@ Endpoints for creating, publishing, and managing shareable diagnostic forms
 """
 
 from fastapi import APIRouter, HTTPException, Request
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import BaseModel, EmailStr, Field, ValidationError
 from uuid import UUID, uuid4
 from datetime import datetime
@@ -12,6 +12,8 @@ from datetime import datetime
 from app.models.question import Question
 from app.database import db
 from app.utils.slug_generator import generate_slug
+from app.services.email_service import get_email_service
+from app.services.khan_academy_service import get_khan_academy_service
 
 router = APIRouter(prefix="/api/forms", tags=["forms"])
 
@@ -807,6 +809,19 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
 
         print(f"[FORMS] Form submission complete")
 
+        # Send email with personalized resources (async, non-blocking)
+        try:
+            await _send_results_email(
+                session_uuid=session_uuid,
+                student_email=student_email,
+                score_percentage=score,
+                correct_answers=correct_count,
+                total_questions=total_questions
+            )
+        except Exception as email_error:
+            # Don't fail the submission if email fails
+            print(f"[FORMS WARNING] Email sending failed: {email_error}")
+
         return SubmitFormResponse(
             session_id=str(session_uuid),
             score_percentage=score,
@@ -913,3 +928,149 @@ async def get_form_responses(form_id: str):
     except Exception as e:
         print(f"[FORMS] Error fetching responses: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================
+# HELPER FUNCTIONS FOR EMAIL INTEGRATION
+# ============================================================
+
+async def _send_results_email(
+    session_uuid: UUID,
+    student_email: str,
+    score_percentage: float,
+    correct_answers: int,
+    total_questions: int
+):
+    """
+    Send results email with personalized Khan Academy resources
+
+    Args:
+        session_uuid: Session UUID
+        student_email: Student's email
+        score_percentage: Overall score percentage
+        correct_answers: Number of correct answers
+        total_questions: Total questions
+    """
+    print(f"[EMAIL] Preparing results email for {student_email}")
+
+    # Get student name from session
+    session_result = db.client.table("form_sessions")\
+        .select("student_name")\
+        .eq("id", session_uuid)\
+        .execute()
+
+    student_name = "Student"
+    if session_result.data and session_result.data[0].get("student_name"):
+        student_name = session_result.data[0]["student_name"]
+
+    # Identify weak topics (topics where student got less than 60% correct)
+    weak_topics = await _identify_weak_topics(session_uuid)
+
+    if not weak_topics:
+        print("[EMAIL] No weak topics identified - student performed well!")
+        # Still send email but with congratulatory message
+        email_service = get_email_service()
+        email_service.send_diagnostic_results(
+            student_email=student_email,
+            student_name=student_name,
+            score_percentage=score_percentage,
+            correct_answers=correct_answers,
+            total_questions=total_questions,
+            weak_topics_resources={}
+        )
+        return
+
+    # Get Khan Academy resources for weak topics
+    khan_service = get_khan_academy_service()
+    weak_topic_names = [topic['topic_name'] for topic in weak_topics]
+
+    print(f"[EMAIL] Finding Khan Academy resources for {len(weak_topic_names)} weak topics")
+    resources = await khan_service.find_resources_for_topics(weak_topic_names)
+
+    # Send email
+    email_service = get_email_service()
+    result = email_service.send_diagnostic_results(
+        student_email=student_email,
+        student_name=student_name,
+        score_percentage=score_percentage,
+        correct_answers=correct_answers,
+        total_questions=total_questions,
+        weak_topics_resources=resources
+    )
+
+    if result['success']:
+        print(f"[EMAIL] Successfully sent results to {student_email}")
+    else:
+        print(f"[EMAIL ERROR] Failed to send email: {result.get('error', 'Unknown error')}")
+
+
+async def _identify_weak_topics(session_uuid: UUID) -> List[Dict]:
+    """
+    Identify topics where student performed poorly (< 60% correct)
+
+    Args:
+        session_uuid: Session UUID
+
+    Returns:
+        List of dicts with topic info: {topic_name, correct, total, percentage}
+    """
+    # Get all responses for this session with topic information
+    responses_result = db.client.table("responses")\
+        .select("topic_id, is_correct")\
+        .eq("session_id", session_uuid)\
+        .execute()
+
+    if not responses_result.data:
+        return []
+
+    # Get unique topic IDs
+    topic_ids = list(set(r['topic_id'] for r in responses_result.data if r.get('topic_id')))
+
+    if not topic_ids:
+        return []
+
+    # Get topic names
+    topics_result = db.client.table("topics")\
+        .select("id, name")\
+        .in_("id", topic_ids)\
+        .execute()
+
+    topic_names = {t['id']: t['name'] for t in topics_result.data} if topics_result.data else {}
+
+    # Calculate scores per topic
+    topic_scores = {}
+    for response in responses_result.data:
+        topic_id = response.get('topic_id')
+        if not topic_id:
+            continue
+
+        if topic_id not in topic_scores:
+            topic_scores[topic_id] = {
+                'topic_id': topic_id,
+                'topic_name': topic_names.get(topic_id, 'Unknown Topic'),
+                'total': 0,
+                'correct': 0
+            }
+
+        topic_scores[topic_id]['total'] += 1
+        if response.get('is_correct'):
+            topic_scores[topic_id]['correct'] += 1
+
+    # Identify weak topics (< 60% correct)
+    weak_topics = []
+    for topic_id, scores in topic_scores.items():
+        percentage = (scores['correct'] / scores['total']) * 100 if scores['total'] > 0 else 0
+        scores['percentage'] = percentage
+
+        # Mark as weak if less than 60% correct
+        if percentage < 60:
+            weak_topics.append(scores)
+
+    # Sort by percentage (worst first)
+    weak_topics.sort(key=lambda x: x['percentage'])
+
+    print(f"[ANALYSIS] Identified {len(weak_topics)} weak topics out of {len(topic_scores)} total")
+    for topic in weak_topics:
+        print(f"  • {topic['topic_name']}: {topic['percentage']:.0f}% ({topic['correct']}/{topic['total']})")
+
+    return weak_topics

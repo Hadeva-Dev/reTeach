@@ -72,7 +72,11 @@ export default function ResultsPage() {
     if (responseCount > 0) {
       return responseCount
     }
-    return stats.reduce((sum, stat) => sum + stat.n, 0)
+    // Calculate actual number of student responses
+    // Each student answers questions for all topics, so divide by number of topics
+    const totalAnswers = stats.reduce((sum, stat) => sum + stat.n, 0)
+    const numTopics = stats.length
+    return numTopics > 0 ? Math.round(totalAnswers / numTopics) : 0
   }, [responseCount, stats])
 
   const averageScore = useMemo(() => {
@@ -221,8 +225,7 @@ export default function ResultsPage() {
                     </defs>
                     <XAxis
                       dataKey="topic"
-                      angle={-45}
-                      textAnchor="end"
+                      textAnchor="middle"
                       height={70}
                       tick={{ fill: '#9ca3af', fontSize: 11 }}
                       tickLine={false}

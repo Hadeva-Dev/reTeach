@@ -275,7 +275,7 @@ export default function PreviewPage() {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Creating Google Form...
+                Generating your reTeach form...
               </>
             ) : (
               'Publish Form'
