@@ -5,7 +5,7 @@ Endpoints for creating, publishing, and managing shareable diagnostic forms
 
 from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ValidationError
 from uuid import UUID, uuid4
 from datetime import datetime
 
@@ -97,6 +97,11 @@ async def publish_form(request: PublishFormRequest):
         Form ID, slug, and shareable URL
     """
     try:
+        print(f"[FORMS] Publishing form with {len(request.questions)} questions")
+        print(f"[FORMS] Title: {request.title}")
+        if request.questions:
+            print(f"[FORMS] First question sample: {request.questions[0].model_dump()}")
+
         # Create or get default course
         course_result = db.client.table("courses")\
             .select("id")\
@@ -213,8 +218,15 @@ async def publish_form(request: PublishFormRequest):
             total_questions=len(request.questions)
         )
 
+    except ValidationError as e:
+        print(f"[FORMS] Validation error: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"[FORMS] Error publishing form: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
