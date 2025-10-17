@@ -1,332 +1,157 @@
-# 📚 reTeach
+<div align="center">
+  <img src="./public/logo.png" alt="reTeach Logo" width="200"/>
 
-> **Intelligent Diagnostic Assessment Platform for Educators**
+  # reTeach
 
-reTeach transforms your course syllabus into personalized diagnostic assessments in minutes. Using AI, it generates topic-specific questions, analyzes student performance, and automatically sends tailored study resources via email.
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+  [![Made with Next.js](https://img.shields.io/badge/Made%20with-Next.js-black)](https://nextjs.org/)
+  [![Powered by FastAPI](https://img.shields.io/badge/Powered%20by-FastAPI-009688)](https://fastapi.tiangolo.com/)
+  [![Built with Cool Vibes](https://img.shields.io/badge/Built%20with-Cool%20Vibes-ff69b4)](https://github.com/Hadeva-Dev/reTeach)
+  [![Made by Hao & Dennis](https://img.shields.io/badge/Made%20by-Hao%20%26%20Dennis-orange)](https://github.com/Hadeva-Dev/reTeach)
 
----
+  ### Intelligent diagnostic assessment platform for educators
+</div>
 
-## ✨ Features
-
-- 🤖 **AI-Powered Question Generation** - Automatically creates diagnostic questions from your syllabus
-- 📊 **Real-Time Analytics** - Track student performance by topic with interactive dashboards
-- 📧 **Automated Study Resources** - Students receive personalized Khan Academy links for weak topics
-- 🎯 **Topic-Based Analysis** - Identify knowledge gaps across your entire course
-- 🔗 **Easy Sharing** - Share assessments via link or QR code
-- 📱 **Mobile Friendly** - Works seamlessly on any device
-
----
-
-## 🚀 Quick Start
-
-### For Teachers
-
-1. **Upload Your Syllabus** → AI extracts course topics
-2. **Review & Generate Questions** → AI creates 3 questions per topic
-3. **Preview & Publish** → Share with students
-4. **View Results** → Analyze performance and identify trends
-
-### For Students
-
-1. **Open Assessment Link** → Receive link from teacher
-2. **Enter Your Name & Email** → Start the diagnostic
-3. **Answer Questions** → Complete all questions
-4. **Receive Resources** → Get personalized study materials via email
+Transform your course syllabus into personalized diagnostic assessments in minutes. Using AI, reTeach generates topic-specific questions, analyzes student performance, and automatically sends tailored study resources via email.
 
 ---
 
-## 📖 Complete Workflow Guide
+## Features
 
-### Step 1: Upload Your Syllabus
-
-Navigate to the **Create** page and upload your course syllabus (PDF or TXT file).
-
-![Upload Syllabus](./docs/images/01-upload.png)
-*The AI will automatically extract course topics and structure from your syllabus*
-
-**What happens:**
-- AI reads your syllabus
-- Extracts main topics and subtopics
-- Identifies prerequisites and course structure
+- **AI-Powered Question Generation** - Automatically creates diagnostic questions from your syllabus
+- **Real-Time Analytics** - Track student performance by topic with interactive dashboards
+- **Automated Study Resources** - Students receive personalized Khan Academy links for weak topics
+- **Topic-Based Analysis** - Identify knowledge gaps across your entire course
+- **Easy Sharing** - Share assessments via link or QR code
+- **Mobile Friendly** - Works seamlessly on any device
 
 ---
 
-### Step 2: Review Topics
+## Workflow
 
-After upload, review the extracted topics. You can add, remove, or edit any topics.
+### 1. Upload Syllabus & Extract Topics
 
-![Review Topics](./docs/images/02-review-topics.png)
-*Review and customize the topics before generating questions*
+Upload your course syllabus and let AI extract the main topics and structure.
 
-**Actions available:**
-- ✅ Select/deselect topics to include
-- ✏️ Edit topic names
-- ➕ Add new topics manually
-- 🗑️ Remove irrelevant topics
+![Upload & Extract](./docs/images/uploadsyllabusextract.png)
 
 ---
 
-### Step 3: Generate Questions
+### 2. Review Topics
 
-Click **Generate Questions** to create 3 AI-powered questions per topic.
+Review and customize the extracted topics before generating questions.
 
-![Generate Questions](./docs/images/03-generate.png)
-*AI generates topic-specific multiple choice questions with 3 options each*
-
-**Generation process:**
-- Creates 3 questions per selected topic
-- Each question has 3 answer choices
-- Questions test different cognitive levels (Remember, Understand, Apply)
-- Includes rationale for correct answers
+![Review Topics](./docs/images/reviewtopics.png)
 
 ---
 
-### Step 4: Preview & Edit Questions
+### 3. Preview Questions
 
-Review all generated questions. Click any question to edit the stem, options, or correct answer.
+AI generates 3 questions per topic. Review and edit as needed.
 
-![Preview Questions](./docs/images/04-preview.png)
-*Edit questions, options, and mark correct answers before publishing*
-
-**Editing features:**
-- 📝 Edit question text
-- ✏️ Modify answer options
-- ✓ Set correct answer by clicking the checkmark
-- 👁️ Preview student view
+![Preview Questions](./docs/images/previewquestions.png)
 
 ---
 
-### Step 5: Publish Form
+### 4. Publish & Share
 
-Enter a form title and click **Publish Form** to create your diagnostic assessment.
+Publish your diagnostic and share it with students via link or QR code.
 
-![Publish Form](./docs/images/05-publish.png)
-*Publishing creates a unique shareable link for your assessment*
-
-**What you get:**
-- 🔗 Unique form URL
-- 📱 QR code for easy sharing
-- 📊 Results dashboard link
+![Form Published](./docs/images/formpublished.png)
 
 ---
 
-### Step 6: Share with Students
+### 5. Student Experience
 
-Share the form link or QR code with your students via email, LMS, or classroom display.
+Students complete the assessment with a clean, simple interface.
 
-![Share Form](./docs/images/06-share.png)
-*Multiple ways to share your diagnostic with students*
+![Diagnostic Assessment](./docs/images/diagnosticassessment1.png)
 
-**Sharing options:**
-- Copy link to clipboard
-- Download QR code
-- Share via email
-- Post in LMS (Canvas, Blackboard, etc.)
+![Diagnostic Assessment Continued](./docs/images/diagnosticassessment2.png)
 
 ---
 
-### Step 7: Student Experience
+### 6. Automated Feedback
 
-Students receive a clean, simple interface to complete the diagnostic.
+Students receive personalized study resources via email immediately after submission.
 
-![Student Form](./docs/images/07-student-form.png)
-*Students enter their name/email and answer questions one by one*
-
-**Student workflow:**
-1. Enter name and email
-2. Answer all questions (one per page)
-3. Submit assessment
-4. Receive confirmation with score
+![Student Feedback](./docs/images/studentfeedback.png)
 
 ---
 
-### Step 8: Automated Email to Students
+### 7. View Results
 
-After submission, students automatically receive an email with:
-- Their overall score
-- Khan Academy resources for weak topics
-- Textbook page references
-- Next steps for improvement
+Access comprehensive analytics showing performance by topic and identifying weak areas.
 
-![Student Email](./docs/images/08-student-email.png)
-*Personalized study resources sent automatically after submission*
+![Results Dashboard](./docs/images/resultsdashboard.png)
 
-**Email includes:**
-- 📊 Score breakdown
-- 📚 Khan Academy links for each weak topic
-- 📖 Textbook page ranges
-- 💡 Study recommendations
+![Student Response Analysis](./docs/images/studentresponseanlysis.png)
 
 ---
 
-### Step 9: View Results Dashboard
+## Technology Stack
 
-Access the results dashboard to see aggregated performance data.
+**Frontend**
+- Next.js 15
+- TypeScript
+- Tailwind CSS
+- Recharts
 
-![Results Dashboard](./docs/images/09-results.png)
-*Interactive dashboard showing performance by topic*
-
-**Analytics shown:**
-- 📊 Average score across all students
-- 📈 Topic-by-topic performance
-- 👥 Total number of responses
-- 🎯 Weak topics identification
-- 📉 Score distribution
-
-**Key metrics:**
-- **Total Responses** - Number of students who completed the assessment
-- **Average Score** - Overall class performance
-- **Topic Scores** - Bar chart showing average score per topic
-- **Weak Topics** - Topics where students struggled most
+**Backend**
+- FastAPI (Python)
+- Supabase
+- Anthropic Claude
+- SMTP
 
 ---
 
-### Step 10: Dashboard Overview
-
-View all your diagnostics and track overall class readiness.
-
-![Dashboard](./docs/images/10-dashboard.png)
-*Manage all your diagnostic assessments in one place*
-
-**Dashboard features:**
-- 📋 All published diagnostics
-- 🎯 Overall readiness score
-- 📊 Response rates
-- 🔴 At-risk students
-- 📅 Recent activity
-
----
-
-## 🎨 Key Features in Detail
-
-### AI Question Generation
-
-reTeach uses Claude AI (Anthropic) to generate high-quality diagnostic questions:
-
-- **Context-Aware** - Questions match your course content and level
-- **Varied Difficulty** - Includes easy, medium, and hard questions
-- **Bloom's Taxonomy** - Tests different cognitive levels
-- **Topic-Specific** - Each question targets a specific topic
-
-### Real-Time Analytics
-
-Track student performance with interactive visualizations:
-
-- **Topic Distribution** - See which topics students struggle with
-- **Score Trends** - Monitor class performance over time
-- **Individual Results** - Drill down to specific student responses
-- **Export Data** - Download results for further analysis
-
-### Automated Study Resources
-
-Students receive personalized resources based on their weak topics:
-
-- **Khan Academy Links** - Curated video lessons and practice
-- **Textbook References** - Page ranges for each topic
-- **Study Recommendations** - Prioritized learning paths
-- **Email Delivery** - Sent automatically after submission
-
----
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type-safe code
-- **Tailwind CSS** - Utility-first styling
-- **Recharts** - Interactive data visualizations
-- **Framer Motion** - Smooth animations
-
-### Backend
-- **FastAPI** (Python) - High-performance API
-- **Supabase** - PostgreSQL database
-- **Anthropic Claude** - AI question generation
-- **SMTP** - Email delivery
-
-### Deployment
-- **Vercel** - Frontend hosting
-- **Railway/Render** - Backend hosting
-
----
-
-## 📦 Installation & Setup
+## Installation
 
 ### Prerequisites
 
-- **Node.js** 18+ (for frontend)
-- **Python** 3.10+ (for backend)
-- **Supabase** account (free tier works)
-- **Anthropic API** key (for AI features)
-- **SMTP** credentials (Gmail, SendGrid, etc.)
+- Node.js 18+
+- Python 3.10+
+- Supabase account
+- Anthropic API key
+- SMTP credentials
 
 ### Frontend Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/Hadeva-Dev/reTeach.git
 cd reTeach
-
-# Install dependencies
 npm install
-
-# Set up environment variables
 cp .env.example .env.local
-# Edit .env.local with your API URLs
-
-# Run development server
+# Edit .env.local with your API URL
 npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ### Backend Setup
 
 ```bash
-# Navigate to backend
 cd backend
-
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate
 pip install -r requirements.txt
-
-# Set up environment variables
 cp .env.example .env
-# Edit .env with your credentials:
-# - SUPABASE_URL
-# - SUPABASE_KEY
-# - ANTHROPIC_API_KEY
-# - SMTP credentials
-
-# Run development server
+# Edit .env with your credentials
 uvicorn app.main:app --reload --port 8000
 ```
 
-Backend runs at [http://localhost:8000](http://localhost:8000)
-
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
-### Frontend (.env.local)
-
+**Frontend (.env.local)**
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000  # Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-### Backend (.env)
-
+**Backend (.env)**
 ```bash
-# Database
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_anon_key
-
-# AI
 ANTHROPIC_API_KEY=your_anthropic_api_key
-
-# Email
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 BOT_EMAIL=your_email@gmail.com
@@ -335,116 +160,21 @@ BOT_PASSWORD=your_app_password
 
 ---
 
-## 🚀 Deployment
-
-### Deploy Frontend to Vercel
-
-1. Push your code to GitHub
-2. Import project to Vercel
-3. Configure settings:
-   - **Framework**: Next.js
-   - **Root Directory**: `./`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `.next`
-4. Add environment variable:
-   - `NEXT_PUBLIC_API_URL` = your backend URL
-5. Deploy!
-
-### Deploy Backend to Railway
-
-1. Create new project in Railway
-2. Connect GitHub repository
-3. Select `backend` directory as root
-4. Add environment variables (Supabase, Anthropic, SMTP)
-5. Deploy!
-
-**Alternative:** Use Render.com or Fly.io for backend hosting.
-
----
-
-## 📝 Usage Tips
-
-### For Teachers
-
-- **Start Small** - Begin with 5-10 topics for your first diagnostic
-- **Review Questions** - Always preview and edit AI-generated questions
-- **Share Early** - Give students at least 24 hours to complete
-- **Monitor Results** - Check the dashboard regularly during the assessment window
-- **Follow Up** - Use weak topics data to adjust your teaching
-
-### For Students
-
-- **Complete in One Sitting** - Most diagnostics take 10-20 minutes
-- **Use Valid Email** - You'll receive study resources via email
-- **Read Carefully** - Each question tests a specific concept
-- **Check Your Email** - Personalized resources arrive immediately after submission
-
----
-
-## 🔒 Security & Privacy
-
-- **No Account Required** - Students don't need to create accounts
-- **Email Privacy** - Student emails are only used for sending resources
-- **Secure Storage** - All data encrypted in transit and at rest
-- **FERPA Compliant** - No personal information shared with third parties
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Support
 
-- **Anthropic Claude** - AI question generation
-- **Khan Academy** - Educational resource links
-- **Supabase** - Database and authentication
-- **Vercel** - Frontend hosting
-- **Next.js Team** - Amazing framework
-
----
-
-## 📧 Support
-
-- 📖 **Documentation**: [GitHub Wiki](https://github.com/Hadeva-Dev/reTeach/wiki)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/Hadeva-Dev/reTeach/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/Hadeva-Dev/reTeach/discussions)
-
----
-
-## 🗺️ Roadmap
-
-### Coming Soon
-
-- [ ] PDF export of results
-- [ ] Custom branding options
-- [ ] Multi-language support
-- [ ] Video tutorial integration
-- [ ] Bulk student import
-- [ ] Advanced analytics (percentiles, trends)
-- [ ] Integration with LMS (Canvas, Blackboard)
-- [ ] Mobile app (iOS & Android)
+- Bug Reports: [GitHub Issues](https://github.com/Hadeva-Dev/reTeach/issues)
+- Discussions: [GitHub Discussions](https://github.com/Hadeva-Dev/reTeach/discussions)
 
 ---
 
 <div align="center">
-
-**Made with ❤️ for educators**
-
-[Get Started](https://reteach.app) • [Documentation](https://github.com/Hadeva-Dev/reTeach/wiki) • [Report Bug](https://github.com/Hadeva-Dev/reTeach/issues)
-
+  <sub>Built by <a href="https://github.com/zarfix123">Dennis</a> & <a href="https://github.com/jappabl">Hao</a></sub>
+  <br>
+  <sub><a href="https://www.linkedin.com/in/dennis-freyman/">Dennis on LinkedIn</a> • <a href="https://www.linkedin.com/in/haolinpacific/">Hao on LinkedIn</a></sub>
 </div>
