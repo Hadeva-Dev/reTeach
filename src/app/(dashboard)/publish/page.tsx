@@ -10,16 +10,15 @@ import { ArrowLeft, BarChart3 } from 'lucide-react'
 export default function PublishPage() {
   const router = useRouter()
   const formUrl = useStore((state) => state.formUrl)
-  const sheetUrl = useStore((state) => state.sheetUrl)
 
   useEffect(() => {
-    // Redirect if no form URLs
-    if (!formUrl || !sheetUrl) {
+    // Redirect if no form URL
+    if (!formUrl) {
       router.push('/upload')
     }
-  }, [formUrl, sheetUrl, router])
+  }, [formUrl, router])
 
-  if (!formUrl || !sheetUrl) {
+  if (!formUrl) {
     return null // Will redirect
   }
 
@@ -55,9 +54,9 @@ export default function PublishPage() {
           {/* URLs */}
           <div className="card bg-white dark:bg-gray-900 p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Links
+              Share Link
             </h2>
-            <PublishCard formUrl={formUrl} sheetUrl={sheetUrl} />
+            <PublishCard formUrl={formUrl} />
           </div>
 
           {/* QR Code */}
