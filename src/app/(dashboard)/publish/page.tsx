@@ -44,7 +44,7 @@ export default function PublishPage() {
           </button>
 
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
-            Form Published! 🎉
+            Form Published!
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
             Your diagnostic assessment has been created. Share the form with students and view results when they submit.

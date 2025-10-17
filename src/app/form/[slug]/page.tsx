@@ -14,6 +14,14 @@ interface FormInfo {
   status: string
 }
 
+interface Question {
+  id: string
+  topic: string
+  stem: string
+  options: string[]
+  answerIndex: number
+}
+
 export default function FormPage() {
   const params = useParams()
   const slug = params?.slug as string
@@ -30,6 +38,12 @@ export default function FormPage() {
 
   // Session
   const [sessionId, setSessionId] = useState<string | null>(null)
+
+  // Questions
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
 
   // Fetch form info on load
   useEffect(() => {
@@ -81,6 +95,10 @@ export default function FormPage() {
 
       const data = await response.json()
       setSessionId(data.session_id)
+
+      // Fetch questions
+      await fetchQuestions()
+
       setStep('questions')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start form')
@@ -88,6 +106,80 @@ export default function FormPage() {
       setSubmitting(false)
     }
   }
+
+  // Fetch questions
+  const fetchQuestions = async () => {
+    setLoadingQuestions(true)
+    try {
+      const response = await fetch(`${API_BASE}/api/forms/${slug}/questions`)
+
+      if (!response.ok) {
+        throw new Error('Failed to load questions')
+      }
+
+      const data = await response.json()
+      setQuestions(data.questions || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load questions')
+    } finally {
+      setLoadingQuestions(false)
+    }
+  }
+
+  // Handle answer selection
+  const handleAnswerSelect = (questionId: string, optionIndex: number) => {
+    setAnswers(prev => ({ ...prev, [questionId]: optionIndex }))
+  }
+
+  // Navigate to next question
+  const handleNext = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1)
+    }
+  }
+
+  // Navigate to previous question
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1)
+    }
+  }
+
+  // Submit answers
+  const handleSubmit = async () => {
+    if (!sessionId) return
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${API_BASE}/api/forms/${slug}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          answers: Object.entries(answers).map(([question_id, selected_index]) => ({
+            question_id,
+            selected_index
+          }))
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to submit answers')
+      }
+
+      setStep('complete')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit answers')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const currentQuestion = questions[currentQuestionIndex]
+  const isLastQuestion = currentQuestionIndex === questions.length - 1
+  const answeredCount = Object.keys(answers).length
 
   // Loading state
   if (loading) {
@@ -218,14 +310,135 @@ export default function FormPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8">
-                <p className="text-center text-gray-600 dark:text-gray-400">
-                  Question interface coming soon...
-                </p>
-                <p className="text-center text-sm text-gray-500 dark:text-gray-500 mt-4">
-                  Session ID: {sessionId}
-                </p>
-              </div>
+              {loadingQuestions ? (
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8">
+                  <div className="text-center">
+                    <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400">Loading questions...</p>
+                  </div>
+                </div>
+              ) : currentQuestion ? (
+                <div className="space-y-6">
+                  {/* Progress Bar */}
+                  <div className="bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Question {currentQuestionIndex + 1} of {questions.length}
+                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {answeredCount}/{questions.length} answered
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-600 transition-all duration-300"
+                        style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Question Card */}
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8">
+                    <div className="mb-6">
+                      <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-2">
+                        {currentQuestion.topic}
+                      </div>
+                      <h2 className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">
+                        {currentQuestion.stem}
+                      </h2>
+                    </div>
+
+                    {/* Options */}
+                    <div className="space-y-3 mb-8">
+                      {currentQuestion.options.map((option, index) => {
+                        const isSelected = answers[currentQuestion.id] === index
+                        const optionLabel = String.fromCharCode(65 + index) // A, B, C, D
+
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => handleAnswerSelect(currentQuestion.id, index)}
+                            className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                              isSelected
+                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
+                                isSelected
+                                  ? 'bg-indigo-600 text-white'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                              }`}>
+                                {optionLabel}
+                              </div>
+                              <div className="flex-1 pt-1">
+                                <p className="text-gray-900 dark:text-white">{option}</p>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {error && (
+                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-6">
+                        <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                      </div>
+                    )}
+
+                    {/* Navigation Buttons */}
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        onClick={handlePrevious}
+                        disabled={currentQuestionIndex === 0}
+                        className="px-6 py-3 border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                      >
+                        ← Previous
+                      </button>
+
+                      {isLastQuestion ? (
+                        <button
+                          onClick={handleSubmit}
+                          disabled={submitting || answeredCount < questions.length}
+                          className="px-8 py-3 bg-green-600 hover:bg-green-500 disabled:bg-gray-400 text-white font-semibold rounded-xl transition-all flex items-center gap-2"
+                        >
+                          {submitting ? (
+                            <>
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            <>
+                              Submit Answers
+                              <CheckCircle className="w-5 h-5" />
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleNext}
+                          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all"
+                        >
+                          Next →
+                        </button>
+                      )}
+                    </div>
+
+                    {answeredCount < questions.length && isLastQuestion && (
+                      <p className="text-sm text-amber-600 dark:text-amber-400 text-center mt-4">
+                        Please answer all questions before submitting
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 p-8">
+                  <p className="text-center text-gray-600 dark:text-gray-400">
+                    No questions available
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
 

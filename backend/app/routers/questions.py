@@ -55,6 +55,10 @@ async def generate_questions(request: GenerateQuestionsRequest):
             context=context  # Pass textbook context if available
         )
 
+        # Limit to total_count if specified
+        if request.total_count and len(questions) > request.total_count:
+            questions = questions[:request.total_count]
+
         return GenerateQuestionsResponse(questions=questions)
 
     except Exception as e:

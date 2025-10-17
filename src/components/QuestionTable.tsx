@@ -1,7 +1,7 @@
 'use client'
 
 import type { Question } from '@/lib/schema'
-import { Trash2, CheckCircle } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 
 interface QuestionTableProps {
   questions: Question[]
@@ -12,23 +12,6 @@ export default function QuestionTable({ questions, onChange }: QuestionTableProp
   const handleStemChange = (questionId: string, stem: string) => {
     const updated = questions.map(q =>
       q.id === questionId ? { ...q, stem } : q
-    )
-    onChange(updated)
-  }
-
-  const handleOptionChange = (questionId: string, optionIndex: number, value: string) => {
-    const updated = questions.map(q => {
-      if (q.id !== questionId) return q
-      const newOptions = [...q.options] as [string, string, string, string]
-      newOptions[optionIndex] = value
-      return { ...q, options: newOptions }
-    })
-    onChange(updated)
-  }
-
-  const handleAnswerChange = (questionId: string, answerIndex: number) => {
-    const updated = questions.map(q =>
-      q.id === questionId ? { ...q, answerIndex } : q
     )
     onChange(updated)
   }
@@ -96,36 +79,22 @@ export default function QuestionTable({ questions, onChange }: QuestionTableProp
 
             {/* Options */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Options (click ✓ to set correct answer)
-              </label>
-              {question.options.map((option, optIndex) => (
-                <div key={optIndex} className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleAnswerChange(question.id, optIndex)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      question.answerIndex === optIndex
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                    }`}
-                    aria-label={`Set option ${String.fromCharCode(65 + optIndex)} as correct answer`}
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Learners respond with:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {question.options.map((option, optIndex) => (
+                  <span
+                    key={optIndex}
+                    className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200"
                   >
-                    <CheckCircle className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-6">
-                    {String.fromCharCode(65 + optIndex)}.
+                    {option}
                   </span>
-                  <input
-                    type="text"
-                    value={option}
-                    onChange={(e) => handleOptionChange(question.id, optIndex, e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg
-                      focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                      bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
-                    aria-label={`Option ${String.fromCharCode(65 + optIndex)}`}
-                  />
-                </div>
-              ))}
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Use these self-check statements to gauge confidence; there is no single correct answer.
+              </p>
             </div>
           </div>
         ))}

@@ -5,6 +5,7 @@ Extracts topics from course syllabi using LLM
 
 from typing import List, Optional
 from uuid import UUID, uuid4
+import re
 
 from app.models.topic import Topic, ParseTopicsRequest, ParseTopicsResponse
 from app.models.course import CourseLevel
@@ -86,11 +87,16 @@ If no prerequisites are mentioned, return empty array.
         if prerequisites:
             print(f"[TOPIC PARSER] Found prerequisites: {', '.join(prerequisites)}")
 
+        # IMPORTANT: Do NOT use explicit topics from syllabus - those are course content
+        # We want to extract PREREQUISITE topics only using AI
+        candidate_sections = self._extract_candidate_sections(syllabus_text)
+
         # Create prompt
         prompt = topic_extraction_prompt(
             syllabus_text=syllabus_text,
             course_level=course_level.value if course_level else None,
-            prerequisites=prerequisites
+            prerequisites=prerequisites,
+            candidate_sections=candidate_sections
         )
 
         try:
@@ -183,6 +189,114 @@ If no prerequisites are mentioned, return empty array.
             if candidate not in existing_ids:
                 return candidate
             counter += 1
+
+    def _extract_candidate_sections(self, syllabus_text: str) -> List[str]:
+        """Extract candidate section headings from the syllabus text."""
+        patterns = [
+            r"^#{1,3}\s+(.+)$",  # Markdown headings
+            r"^\d+\.?\s+(.+)$",  # Numbered list headings
+            r"^[A-Z][A-Za-z0-9 ,&\-/]+:$",  # Lines ending with colon
+            r"^[A-Z][A-Za-z0-9 ,&\-/]+$"  # All caps or title case single line
+        ]
+
+        candidates: list[str] = []
+        seen = set()
+
+        for line in syllabus_text.splitlines():
+            stripped = line.strip()
+            if not stripped or len(stripped) < 3:
+                continue
+
+            match = None
+            for pattern in patterns:
+                match = re.match(pattern, stripped)
+                if match:
+                    break
+
+            if not match:
+                continue
+
+            heading = match.group(1).strip() if match.groups() else stripped
+            heading = re.sub(r"\s+", " ", heading).rstrip(':')
+
+            if 3 <= len(heading) <= 120 and heading.lower() not in seen:
+                candidates.append(heading)
+                seen.add(heading.lower())
+
+            if len(candidates) >= 12:
+                break
+
+        return candidates
+
+    def _extract_explicit_topics(self, syllabus_text: str) -> List[str]:
+        """Extract explicit topic lists (lettered or numbered) from the syllabus."""
+        lines = syllabus_text.splitlines()
+        topics: list[str] = []
+        capture = False
+        last_was_bullet = False
+
+        bullet_patterns = [
+            re.compile(r"^\s*[a-z]\)\s+(.+)$", re.IGNORECASE),
+            re.compile(r"^\s*\d+\.?\s+(.+)$"),
+            re.compile(r"^\s*[-•]\s+(.+)$")
+        ]
+
+        for raw_line in lines:
+            line = raw_line.strip()
+
+            if not capture and "specific topics include" in line.lower():
+                capture = True
+                continue
+
+            if capture:
+                if not line:
+                    if topics and last_was_bullet:
+                        break
+                    continue
+
+                matched_text = None
+                for pattern in bullet_patterns:
+                    match = pattern.match(line)
+                    if match:
+                        matched_text = match.group(1).strip()
+                        break
+
+                if matched_text:
+                    topics.append(matched_text.rstrip('.'))
+                    last_was_bullet = True
+                    continue
+
+                if re.match(r"^[A-Z][A-Za-z0-9 ,&\-/]+:?$", line):
+                    if topics:
+                        break
+                    else:
+                        capture = False
+                        continue
+
+                if topics:
+                    topics[-1] += f" {line.rstrip('.')}"
+                    last_was_bullet = False
+
+        if len(topics) >= 3:
+            return topics
+        return []
+
+    def _build_topics_from_list(self, topic_names: List[str]) -> List[Topic]:
+        """Build Topic objects from an explicit list with normalized weights."""
+        total = len(topic_names)
+        if total == 0:
+            return []
+
+        weight = round(1 / total, 4)
+        topics: list[Topic] = []
+        for idx, name in enumerate(topic_names, start=1):
+            topics.append(Topic(
+                id=f"t_{idx:03d}",
+                name=name.strip().rstrip('.'),
+                weight=weight,
+                prereqs=[]
+            ))
+        return topics
 
     def _ensure_prerequisite_topics(
         self,

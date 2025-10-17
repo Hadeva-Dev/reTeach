@@ -40,9 +40,9 @@ export async function generateQuestions(
   textbookId?: string | null
 ): Promise<Question[]> {
   try {
-    // Calculate questions per topic
+    // Calculate questions per topic - use ceiling to ensure we get at least the requested count
     const topicNames = topics.map(t => t.name)
-    const countPerTopic = Math.max(1, Math.floor(count / topicNames.length))
+    const countPerTopic = Math.max(1, Math.ceil(count / topicNames.length))
 
     // Use survey endpoint for survey type, questions endpoint for quiz
     const endpoint = assessmentType === 'survey'
@@ -52,7 +52,8 @@ export async function generateQuestions(
     const requestBody: any = {
       topics: topicNames,
       count_per_topic: countPerTopic,
-      difficulty: 'med'
+      difficulty: 'med',
+      total_count: count  // Send total count so backend can limit to exactly this number
     }
 
     // If textbook ID is provided, include it for textbook-based generation
@@ -78,7 +79,7 @@ export async function generateQuestions(
       id: q.id,
       topic: q.topic,
       stem: q.stem,
-      options: q.options.slice(0, 4) as [string, string, string, string],
+      options: q.options?.slice(0, 3) ?? ['Yes', 'Maybe', 'No'],
       answerIndex: q.answerIndex,
       rationale: q.rationale,
       difficulty: q.difficulty,

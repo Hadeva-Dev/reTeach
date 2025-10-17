@@ -51,6 +51,7 @@ class GenerateQuestionsRequest(BaseModel):
     difficulty: Optional[Difficulty] = Field(None, description="Target difficulty")
     textbook_id: Optional[str] = Field(None, description="Textbook ID to generate questions from")
     use_textbook: bool = Field(False, description="Whether to use textbook content for generation")
+    total_count: Optional[int] = Field(None, description="Total number of questions desired (backend will limit output)")
 
 
 class GenerateQuestionsResponse(BaseModel):
