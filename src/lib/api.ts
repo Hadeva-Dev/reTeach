@@ -109,7 +109,7 @@ export async function createForm(
           topic: q.topic,
           stem: q.stem,
           options: q.options,
-          answer_index: q.answerIndex,
+          answerIndex: q.answerIndex,
           rationale: q.rationale,
           difficulty: q.difficulty,
           bloom: q.bloom
@@ -139,16 +139,26 @@ export async function createForm(
 }
 
 export async function fetchResults(formId: string): Promise<TopicStat[]> {
-  // Stub: Return sample stats for demo
-  // In production: GET from backend Google Sheets API
-  await new Promise(resolve => setTimeout(resolve, 800))
+  try {
+    const response = await fetch(`${API_BASE}/api/forms/${formId}/stats`)
 
-  return [
-    { topic: 'Introduction to Course', n: 45, correctPct: 78.5 },
-    { topic: 'Core Concepts', n: 45, correctPct: 65.2 },
-    { topic: 'Advanced Topics', n: 45, correctPct: 52.8 },
-    { topic: 'Applications', n: 45, correctPct: 71.3 }
-  ]
+    if (!response.ok) {
+      throw new Error(`Failed to fetch results: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    // Transform backend response to match TopicStat schema
+    return (data.topics || []).map((topic: any) => ({
+      topic: topic.topic_name,
+      n: topic.total_responses,
+      correctPct: topic.correct_percentage
+    }))
+
+  } catch (error) {
+    console.error('Error fetching results:', error)
+    throw error
+  }
 }
 
 export async function fetchPreview(formId: string): Promise<Preview> {

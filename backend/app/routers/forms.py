@@ -25,6 +25,8 @@ class PublishFormRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     questions: List[Question] = Field(..., min_length=1)
     course_id: Optional[str] = Field(None, description="Associated course ID")
+    teacher_email: Optional[EmailStr] = Field(None, description="Teacher email (for tracking)")
+    teacher_name: Optional[str] = Field(None, description="Teacher name")
 
 
 class PublishFormResponse(BaseModel):
@@ -60,7 +62,7 @@ class StartSessionResponse(BaseModel):
 class SubmitAnswer(BaseModel):
     """Single answer submission"""
     question_id: str
-    selected_option_index: int
+    selected_index: int  # Changed from selected_option_index to match frontend
 
 
 class SubmitFormRequest(BaseModel):
@@ -102,6 +104,29 @@ async def publish_form(request: PublishFormRequest):
         if request.questions:
             print(f"[FORMS] First question sample: {request.questions[0].model_dump()}")
 
+        # Handle teacher creation/retrieval
+        teacher_id = None
+        if request.teacher_email:
+            print(f"[FORMS] Processing teacher: {request.teacher_email}")
+
+            # Check if teacher exists
+            teacher_result = db.client.table("teachers")\
+                .select("id")\
+                .eq("email", request.teacher_email.lower())\
+                .execute()
+
+            if teacher_result.data:
+                teacher_id = teacher_result.data[0]["id"]
+                print(f"[FORMS] Found existing teacher: {teacher_id}")
+            else:
+                # Create new teacher
+                new_teacher = db.client.table("teachers").insert({
+                    "email": request.teacher_email.lower(),
+                    "name": request.teacher_name
+                }).execute()
+                teacher_id = new_teacher.data[0]["id"] if new_teacher.data else None
+                print(f"[FORMS] Created new teacher: {teacher_id}")
+
         # Create or get default course
         course_result = db.client.table("courses")\
             .select("id")\
@@ -138,6 +163,7 @@ async def publish_form(request: PublishFormRequest):
             "slug": slug,
             "status": "published",
             "publish_date": datetime.now().isoformat(),
+            "teacher_id": teacher_id  # Link form to teacher
         }
 
         form_result = db.client.table("forms").insert(form_data).execute()
@@ -183,9 +209,12 @@ async def publish_form(request: PublishFormRequest):
         for idx, question in enumerate(request.questions):
             topic_uuid = topic_map[question.topic]
 
+            # Generate unique question_id to avoid conflicts
+            unique_question_id = f"{question.id}_{str(uuid4())[:8]}"
+
             # Create question in questions table
             question_result = db.client.table("questions").insert({
-                "question_id": question.id,
+                "question_id": unique_question_id,
                 "topic_id": topic_uuid,
                 "stem": question.stem,
                 "options": question.options,
@@ -489,9 +518,12 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
         Score and completion confirmation
     """
     try:
-        # Verify session exists
+        print(f"[FORMS] Submitting form: {slug}, session: {submission.session_id}")
+        print(f"[FORMS] Received {len(submission.answers)} answers")
+
+        # Verify session exists and get student info
         session_result = db.client.table("form_sessions")\
-            .select("id, form_id")\
+            .select("id, form_id, student_id, student_email")\
             .eq("id", submission.session_id)\
             .execute()
 
@@ -501,13 +533,58 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
         session = session_result.data[0]
         session_uuid = session["id"]
         form_uuid = session["form_id"]
+        student_id = session.get("student_id")
+        student_email = session.get("student_email")
 
-        # TODO: Store responses and calculate score
-        # For now, return placeholder data
+        print(f"[FORMS] Session found: form={form_uuid}, student={student_id}")
 
+        # Process each answer and store response
         correct_count = 0
         total_questions = len(submission.answers)
+        responses_to_insert = []
+
+        for answer in submission.answers:
+            # Get question details from questions table
+            question_result = db.client.table("questions")\
+                .select("id, question_id, topic_id, answer_index")\
+                .eq("question_id", answer.question_id)\
+                .execute()
+
+            if not question_result.data:
+                print(f"[FORMS WARNING] Question not found: {answer.question_id}")
+                continue
+
+            question = question_result.data[0]
+            question_uuid = question["id"]
+            topic_id = question["topic_id"]
+            correct_answer_index = question["answer_index"]
+
+            # Check if answer is correct
+            is_correct = answer.selected_index == correct_answer_index
+            if is_correct:
+                correct_count += 1
+
+            # Prepare response record
+            responses_to_insert.append({
+                "form_id": form_uuid,
+                "student_id": student_id,
+                "student_email": student_email,
+                "question_id": question_uuid,
+                "topic_id": topic_id,
+                "selected_option_index": answer.selected_index,
+                "is_correct": is_correct,
+                "session_id": session_uuid
+            })
+
+        # Insert all responses
+        if responses_to_insert:
+            print(f"[FORMS] Inserting {len(responses_to_insert)} responses")
+            db.client.table("responses").insert(responses_to_insert).execute()
+
+        # Calculate score
         score = (correct_count / total_questions * 100) if total_questions > 0 else 0
+
+        print(f"[FORMS] Score: {correct_count}/{total_questions} = {score:.1f}%")
 
         # Update session as completed
         db.client.table("form_sessions").update({
@@ -516,6 +593,8 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
             "correct_answers": correct_count,
             "score_percentage": score
         }).eq("id", session_uuid).execute()
+
+        print(f"[FORMS] Form submission complete")
 
         return SubmitFormResponse(
             session_id=str(session_uuid),
@@ -529,6 +608,8 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
         raise
     except Exception as e:
         print(f"[FORMS] Error submitting form: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
