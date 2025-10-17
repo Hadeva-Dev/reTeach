@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://reteach.works'),
   alternates: {
     canonical: '/',
   },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     title: "reTeach - AI Diagnostic Question Generator",
     description: "Generate diagnostic MCQs from syllabi, create Google Forms, and analyze student performance.",
     type: "website",
-    url: "http://localhost:3000",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://reteach.works",
     siteName: "reTeach",
     images: [
       {
@@ -85,7 +85,7 @@ export default function RootLayout({
               "@type": "SoftwareApplication",
               "name": "reTeach",
               "description": "AI-powered diagnostic question generator that creates MCQs from course syllabi, publishes to Google Forms, and analyzes student performance",
-              "url": "http://localhost:3000",
+              "url": process.env.NEXT_PUBLIC_SITE_URL || "https://reteach.works",
               "applicationCategory": "EducationalApplication",
               "operatingSystem": "All",
               "offers": {
@@ -97,7 +97,7 @@ export default function RootLayout({
               "creator": {
                 "@type": "Organization",
                 "name": "reTeach",
-                "url": "http://localhost:3000"
+                "url": process.env.NEXT_PUBLIC_SITE_URL || "https://reteach.works"
               },
               "featureList": [
                 "Syllabus topic extraction",
