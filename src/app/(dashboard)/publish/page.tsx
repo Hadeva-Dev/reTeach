@@ -28,25 +28,61 @@ function PublishPageContent() {
   const hydrationAttemptedRef = useRef(false)
 
   useEffect(() => {
-    if (formUrl && formSlug) {
+    if (hydrationAttemptedRef.current) return
+
+    const finish = () => {
       hydrationAttemptedRef.current = true
       setCheckedQuery(true)
+    }
+
+    // Case 1: already in store
+    if (formSlug) {
+      if (!formUrl && typeof window !== 'undefined') {
+        const derivedUrl = `${window.location.origin}/form/${formSlug}`
+        setPublishInfo({ formUrl: derivedUrl, formSlug, formId: formSlug })
+      }
+      finish()
       return
     }
 
-    if (!hydrationAttemptedRef.current && queryFormUrl && querySlug) {
+    // Case 2: from URL (derive URL if missing)
+    if (querySlug) {
+      const computedUrl =
+        queryFormUrl || (typeof window !== 'undefined' ? `${window.location.origin}/form/${querySlug}` : '')
       setPublishInfo({
-        formUrl: queryFormUrl,
+        formUrl: computedUrl,
         formSlug: querySlug,
-        formId: queryFormId ?? querySlug
+        formId: queryFormId || querySlug
       })
+      finish()
       return
     }
 
-    if (!hydrationAttemptedRef.current && !hasQueryParams) {
-      hydrationAttemptedRef.current = true
-      setCheckedQuery(true)
+    // Case 3: localStorage fallback
+    try {
+      if (typeof window !== 'undefined' && window?.localStorage) {
+        const raw = window.localStorage.getItem('publishInfo')
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (parsed?.formSlug) {
+            const computedUrl =
+              parsed.formUrl || `${window.location.origin}/form/${parsed.formSlug}`
+            setPublishInfo({
+              formUrl: computedUrl,
+              formSlug: parsed.formSlug,
+              formId: parsed.formId || parsed.formSlug
+            })
+            finish()
+            return
+          }
+        }
+      }
+    } catch (_) {
+      // ignore storage errors
     }
+
+    // Nothing available; mark finished and let redirect handle
+    finish()
   }, [
     formUrl,
     formSlug,
@@ -54,17 +90,21 @@ function PublishPageContent() {
     querySlug,
     queryFormId,
     hasQueryParams,
-    setPublishInfo,
-    checkedQuery
+    setPublishInfo
   ])
 
   useEffect(() => {
-    if (checkedQuery && (!formUrl || !formSlug)) {
-      router.replace('/upload')
+    // Only navigate away if we truly cannot recover publish info
+    // Guard against race: if slug is in the URL, do not redirect yet
+    if (checkedQuery && !formSlug && !querySlug) {
+      router.replace('/preview')
     }
-  }, [checkedQuery, formUrl, formSlug, router])
+  }, [checkedQuery, formSlug, querySlug, router])
 
-  if (!formUrl || !formSlug) {
+  const effectiveFormUrl =
+    formUrl || (typeof window !== 'undefined' && formSlug ? `${window.location.origin}/form/${formSlug}` : null)
+
+  if (!formSlug || !effectiveFormUrl) {
     return null // Either hydrating or redirecting
   }
 
@@ -98,13 +138,13 @@ function PublishPageContent() {
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
               Share Link
             </h2>
-            <PublishCard formUrl={formUrl} />
+            <PublishCard formUrl={effectiveFormUrl} />
           </div>
 
           {/* QR Code */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="card">
-              <QRCodeCard url={formUrl} title="Form QR Code" />
+              <QRCodeCard url={effectiveFormUrl} title="Form QR Code" />
             </div>
 
             <div className="card bg-white dark:bg-gray-900 p-6">

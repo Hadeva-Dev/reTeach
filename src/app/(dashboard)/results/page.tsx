@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
@@ -29,7 +29,7 @@ const barGradientForValue = (value: number) => {
   return 'url(#resultsGradientLow)'
 }
 
-export default function ResultsPage() {
+function ResultsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const formId = searchParams.get('formId') || 'demo'
@@ -321,5 +321,14 @@ export default function ResultsPage() {
         )}
       </main>
     </div>
+  )
+}
+
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResultsPageContent />
+    </Suspense>
   )
 }

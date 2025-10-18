@@ -30,8 +30,28 @@ export const useStore = create<Store>((set) => ({
 
   setTopics: (topics) => set({ topics }),
   setQuestions: (questions) => set({ questions }),
-  setPublishInfo: ({ formUrl, formSlug, formId }) => set({ formUrl, formSlug, formId }),
-  clearPublishInfo: () => set({ formUrl: null, formSlug: null, formId: null }),
+  setPublishInfo: ({ formUrl, formSlug, formId }) => {
+    set({ formUrl, formSlug, formId })
+    try {
+      // Persist minimal publish info for refresh/new tab resilience
+      if (typeof window !== 'undefined' && window?.localStorage) {
+        const payload = { formUrl, formSlug, formId, ts: Date.now() }
+        window.localStorage.setItem('publishInfo', JSON.stringify(payload))
+      }
+    } catch (_) {
+      // Ignore storage errors (e.g., private mode)
+    }
+  },
+  clearPublishInfo: () => {
+    set({ formUrl: null, formSlug: null, formId: null })
+    try {
+      if (typeof window !== 'undefined' && window?.localStorage) {
+        window.localStorage.removeItem('publishInfo')
+      }
+    } catch (_) {
+      // Ignore storage errors
+    }
+  },
 
   addTopic: (topic) => set((state) => ({
     topics: [...state.topics, topic]

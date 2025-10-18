@@ -18,11 +18,11 @@ export default function PreviewPage() {
   const [previewTab, setPreviewTab] = useState<'info' | 'questions'>('info')
 
   useEffect(() => {
-    // Redirect if no questions
-    if (questions.length === 0) {
+    // Redirect if no questions, but not while publishing
+    if (questions.length === 0 && !loading) {
       router.push('/upload')
     }
-  }, [questions, router])
+  }, [questions, router, loading])
 
   const handlePublish = async () => {
     setLoading(true)

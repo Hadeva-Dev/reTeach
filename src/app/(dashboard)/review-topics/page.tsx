@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, FileText, Check, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -16,7 +16,7 @@ interface Topic {
   selected: boolean
 }
 
-export default function ReviewTopicsPage() {
+function ReviewTopicsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const textbookTitle = searchParams?.get('title') || 'Uploaded Textbook'
@@ -252,5 +252,14 @@ export default function ReviewTopicsPage() {
         )}
       </main>
     </div>
+  )
+}
+
+
+export default function ReviewTopicsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ReviewTopicsPageContent />
+    </Suspense>
   )
 }
