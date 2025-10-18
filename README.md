@@ -6,10 +6,13 @@
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
   [![Made with Next.js](https://img.shields.io/badge/Made%20with-Next.js-black)](https://nextjs.org/)
   [![Powered by FastAPI](https://img.shields.io/badge/Powered%20by-FastAPI-009688)](https://fastapi.tiangolo.com/)
+  [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel)](https://vercel.com)
   [![Built with Cool Vibes](https://img.shields.io/badge/Built%20with-Cool%20Vibes-ff69b4)](https://github.com/Hadeva-Dev/reTeach)
   [![Made by Hao & Dennis](https://img.shields.io/badge/Made%20by-Hao%20%26%20Dennis-orange)](https://github.com/Hadeva-Dev/reTeach)
 
   ### Intelligent diagnostic assessment platform for educators
+
+  **🚀 Deployed on Vercel** - Experience blazing-fast performance and seamless scalability
 </div>
 
 Transform your course syllabus into personalized diagnostic assessments in minutes. Using AI, reTeach generates topic-specific questions, analyzes student performance, and automatically sends tailored study resources via email.
@@ -96,6 +99,7 @@ Access comprehensive analytics showing performance by topic and identifying weak
 - TypeScript
 - Tailwind CSS
 - Recharts
+- **Deployed on Vercel** for optimal performance and global CDN delivery
 
 **Backend**
 - FastAPI (Python)
