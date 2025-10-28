@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
 
 interface FileDropProps {
-  onText: (text: string) => void
+  onText: (text: string, pages?: string[]) => void
 }
 
 export default function FileDrop({ onText }: FileDropProps) {
@@ -22,17 +22,72 @@ export default function FileDrop({ onText }: FileDropProps) {
     }
   }, [])
 
-  const extractText = async (file: File): Promise<string> => {
+  const extractText = async (file: File): Promise<{ fullText: string; pages: string[] }> => {
     const ext = file.name.split('.').pop()?.toLowerCase()
 
     if (ext === 'txt') {
-      return await file.text()
+      const text = await file.text()
+      return { fullText: text, pages: [text] }
     }
 
     if (ext === 'pdf') {
-      // For PDF files, return a placeholder for now
-      // In production, use pdfjs-dist to extract text
-      return `[PDF Upload: ${file.name}]\n\nPDF text extraction requires additional setup.\n\nFor demo: paste syllabus text manually or use a .txt file.`
+      try {
+        // Dynamically import pdfjs-dist
+        const pdfjsLib = await import('pdfjs-dist')
+
+        // Set worker source to use npm package
+        if (typeof window !== 'undefined') {
+          const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs')
+          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+            'pdfjs-dist/build/pdf.worker.mjs',
+            import.meta.url
+          ).toString()
+        }
+
+        // Convert file to ArrayBuffer
+        const arrayBuffer = await file.arrayBuffer()
+
+        // Load PDF
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+
+        // Extract text from all pages
+        let fullText = ''
+        const pages: string[] = []
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i)
+          const textContent = await page.getTextContent()
+
+          // Reconstruct text with proper line breaks based on Y positions
+          let lastY = -1
+          let pageText = ''
+
+          textContent.items.forEach((item: any) => {
+            const currentY = item.transform[5]
+
+            // If Y position changed significantly, add a line break
+            if (lastY !== -1 && Math.abs(currentY - lastY) > 5) {
+              pageText += '\n'
+            }
+
+            // Add space if not at start of line
+            if (item.str && pageText.length > 0 && !pageText.endsWith('\n') && !pageText.endsWith(' ')) {
+              pageText += ' '
+            }
+
+            pageText += item.str
+            lastY = currentY
+          })
+
+          pages.push(pageText.trim())
+          fullText += pageText.trim() + '\n\n'
+        }
+
+        return { fullText, pages }
+      } catch (err) {
+        console.error('PDF extraction error:', err)
+        throw new Error('Failed to extract text from PDF. Please try a .txt file or paste the text manually.')
+      }
     }
 
     throw new Error('Unsupported file type. Please use .txt or .pdf files.')
@@ -47,9 +102,9 @@ export default function FileDrop({ onText }: FileDropProps) {
     const files = e.dataTransfer.files
     if (files && files[0]) {
       try {
-        const text = await extractText(files[0])
+        const { fullText, pages } = await extractText(files[0])
         setFileName(files[0].name)
-        onText(text)
+        onText(fullText, pages)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to process file')
       }
@@ -63,19 +118,20 @@ export default function FileDrop({ onText }: FileDropProps) {
     const files = e.target.files
     if (files && files[0]) {
       try {
-        const text = await extractText(files[0])
+        const { fullText, pages } = await extractText(files[0])
         setFileName(files[0].name)
-        onText(text)
+        onText(fullText, pages)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to process file')
       }
     }
   }, [onText])
 
-  const handleClear = () => {
+  const handleClear = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     setFileName(null)
     setError(null)
-    onText('')
   }
 
   return (
@@ -103,11 +159,11 @@ export default function FileDrop({ onText }: FileDropProps) {
           aria-label="Upload syllabus file"
         />
 
-        <div className="flex flex-col items-center justify-center gap-4 text-center pointer-events-none">
+        <div className="flex flex-col items-center justify-center gap-4 text-center">
           {fileName ? (
             <>
-              <FileText className="w-12 h-12 text-green-600" />
-              <div>
+              <FileText className="w-12 h-12 text-green-600 pointer-events-none" />
+              <div className="pointer-events-none">
                 <p className="font-semibold text-gray-900 dark:text-white">{fileName}</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   File uploaded successfully
@@ -116,7 +172,7 @@ export default function FileDrop({ onText }: FileDropProps) {
               <button
                 type="button"
                 onClick={handleClear}
-                className="pointer-events-auto mt-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 flex items-center gap-2"
+                className="mt-2 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2 z-10"
                 aria-label="Clear uploaded file"
               >
                 <X className="w-4 h-4" />
@@ -125,8 +181,8 @@ export default function FileDrop({ onText }: FileDropProps) {
             </>
           ) : (
             <>
-              <Upload className="w-12 h-12 text-gray-400" />
-              <div>
+              <Upload className="w-12 h-12 text-gray-400 pointer-events-none" />
+              <div className="pointer-events-none">
                 <p className="font-semibold text-gray-900 dark:text-white">
                   Drop your syllabus here
                 </p>

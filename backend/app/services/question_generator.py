@@ -83,8 +83,7 @@ class QuestionGeneratorService:
 
                         question = Question(**item)
 
-                        # Validate answer bounds
-                        question.validate_answer_bounds()
+                        # Validation happens automatically in Pydantic model
 
                         # Quality check
                         if len(question.options) < 2 or len(question.options) > 6:

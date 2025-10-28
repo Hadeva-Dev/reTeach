@@ -9,7 +9,7 @@ from app.config import settings
 from app.database import db
 
 # Import routers
-from app.routers import topics, questions, surveys, forms, textbooks
+from app.routers import topics, questions, surveys, forms, textbooks, teachers
 
 # Create FastAPI app
 app = FastAPI(
@@ -23,9 +23,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,  # Not needed - auth handled by NextAuth on same domain
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicitly list allowed methods
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],  # Restrict headers
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 # Include routers
@@ -34,6 +35,7 @@ app.include_router(questions.router)
 app.include_router(surveys.router)
 app.include_router(forms.router)
 app.include_router(textbooks.router)
+app.include_router(teachers.router)
 
 
 @app.get("/health")

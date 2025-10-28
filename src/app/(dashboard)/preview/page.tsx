@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import QuestionTable from '@/components/QuestionTable'
 import { createForm } from '@/lib/api'
 import { useStore } from '@/lib/store'
@@ -9,9 +10,12 @@ import { Loader2, ArrowLeft, User, ClipboardList } from 'lucide-react'
 
 export default function PreviewPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const questions = useStore((state) => state.questions)
   const setQuestions = useStore((state) => state.setQuestions)
   const setPublishInfo = useStore((state) => state.setPublishInfo)
+  const completeOnboarding = useStore((state) => state.completeOnboarding)
+  const hasCompletedOnboarding = useStore((state) => state.onboardingCompleted)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formTitle, setFormTitle] = useState('Diagnostic Assessment')
@@ -31,6 +35,20 @@ export default function PreviewPage() {
     try {
       const { formUrl, slug, formId } = await createForm(formTitle, questions)
       setPublishInfo({ formUrl, formSlug: slug, formId })
+
+      // If user hasn't completed onboarding, mark it as complete now
+      if (!hasCompletedOnboarding && session?.user?.email) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/teachers/${session.user.email}/complete-onboarding`, {
+            method: 'POST'
+          })
+          completeOnboarding()
+        } catch (error) {
+          console.error('Failed to mark onboarding complete:', error)
+          // Don't block the publish flow if this fails
+        }
+      }
+
       const query = new URLSearchParams({
         formUrl,
         slug,

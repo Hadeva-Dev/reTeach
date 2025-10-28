@@ -1,16 +1,41 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus } from 'lucide-react'
+import { Plus, Edit2, Check, X } from 'lucide-react'
 import Link from 'next/link'
 
 interface HeroReadinessProps {
   courseName: string
   readinessPct: number
   onCreateNew: () => void
+  onCourseNameChange?: (newName: string) => Promise<void>
 }
 
-export default function HeroReadiness({ courseName, readinessPct, onCreateNew }: HeroReadinessProps) {
+export default function HeroReadiness({ courseName, readinessPct, onCreateNew, onCourseNameChange }: HeroReadinessProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedName, setEditedName] = useState(courseName)
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    if (!editedName.trim() || !onCourseNameChange) return
+
+    setSaving(true)
+    try {
+      await onCourseNameChange(editedName.trim())
+      setIsEditing(false)
+    } catch (err) {
+      console.error('Failed to update course name:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setEditedName(courseName)
+    setIsEditing(false)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -25,9 +50,55 @@ export default function HeroReadiness({ courseName, readinessPct, onCreateNew }:
           <p className="text-xs uppercase tracking-[0.25em] font-semibold text-indigo-600 dark:text-indigo-300 mb-2">
             Class Readiness for
           </p>
-          <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 dark:text-white">
-            {courseName}
-          </h1>
+          {isEditing ? (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <input
+                type="text"
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                className="text-3xl md:text-4xl font-semibold text-slate-900 dark:text-white bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                disabled={saving}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSave()
+                  if (e.key === 'Escape') handleCancel()
+                }}
+              />
+              <button
+                onClick={handleSave}
+                disabled={saving || !editedName.trim()}
+                className="p-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Check className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={saving}
+                className="p-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex w-full justify-center">
+              <div className="inline-flex items-center gap-2">
+                <h1 className="text-3xl md:text-4xl font-semibold text-slate-900 dark:text-white text-center">
+                  {courseName}
+                </h1>
+                {onCourseNameChange && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    title="Edit course name"
+                    aria-label="Edit course name"
+                  >
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Metric */}

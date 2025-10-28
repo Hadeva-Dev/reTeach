@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Sparkles, BarChart3, LayoutDashboard, List, Users } from 'lucide-react'
+import { Menu, X, Sparkles, BarChart3, LayoutDashboard, List, Users, MessageSquare } from 'lucide-react'
 import { motion } from 'framer-motion'
+import UserMenu from './UserMenu'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -79,7 +80,7 @@ export default function DashboardLayout({ children, navbarSlot }: DashboardLayou
                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="Open navigation menu"
               >
-                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                <Menu className={`w-6 h-6 transition-transform duration-300 ${sidebarOpen ? 'rotate-90' : ''}`} />
               </button>
 
               <Link href="/dashboard" className="flex items-center gap-2 group">
@@ -94,10 +95,10 @@ export default function DashboardLayout({ children, navbarSlot }: DashboardLayou
               </Link>
             </div>
 
-            {/* Right: Course selector slot + empty space for notifications */}
+            {/* Right: Course selector slot + user menu */}
             <div className="flex items-center gap-4">
               {navbarSlot}
-              <div className="w-12" />
+              <UserMenu />
             </div>
           </div>
         </header>

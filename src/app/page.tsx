@@ -42,7 +42,7 @@ export default function LandingPage() {
   }, [])
 
   const handleGetStarted = () => {
-    router.push('/upload')
+    router.push('/login')
   }
 
   return (
@@ -71,6 +71,14 @@ export default function LandingPage() {
               </div>
 
               <div className="hidden md:flex items-center space-x-8">
+                <a
+                  href="https://www.skimly.dev/f/reteach"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-gray-900 transition-colors text-base"
+                >
+                  Feedback
+                </a>
                 <motion.a
                   href="#demo"
                   whileHover={{ scale: 1.05 }}
@@ -114,8 +122,8 @@ export default function LandingPage() {
             className="text-center"
           >
             <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold mb-8 leading-tight text-gray-900">
-              <span className="block">Only Good Vibes</span>
-              <span className="block text-gradient-primary">for Education</span>
+              <span className="block">No <span className="text-green-600">Student</span></span>
+              <span className="block">Left Behind</span>
             </h1>
             <p className="text-xl sm:text-2xl text-slate-600 mb-12 max-w-4xl mx-auto leading-relaxed">
               Extract topics. Generate questions. Analyze student understanding.
@@ -604,7 +612,7 @@ export default function LandingPage() {
                 whileTap={{ scale: 0.95 }}
                 className="px-12 py-6 bg-white text-indigo-600 font-bold text-xl rounded-full hover:bg-gray-50 transition-all duration-300 shadow-xl hover:shadow-2xl inline-flex items-center"
               >
-                Upload Your Syllabus
+                Get Started
                 <ChevronRight className="ml-3 w-6 h-6" />
               </motion.button>
             </div>
@@ -617,6 +625,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center space-y-6">
             <div className="flex items-center space-x-6 text-sm text-gray-500">
+              <Link href="/contact" className="hover:text-gray-700 transition-colors">Contact Us</Link>
               <Link href="/privacy" className="hover:text-gray-700 transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-gray-700 transition-colors">Terms of Service</Link>
             </div>

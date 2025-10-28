@@ -21,44 +21,44 @@ export default function PublishCard({ formUrl }: PublishCardProps) {
   }
 
   return (
-    <div className="p-6 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">
-            Form URL
-          </h3>
-          <p className="text-sm text-blue-700 dark:text-blue-300 font-mono truncate">
-            {formUrl}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => copyToClipboard(formUrl)}
-            className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            aria-label="Copy form URL"
-          >
-            {copied ? (
-              <CheckCircle className="w-5 h-5" />
-            ) : (
-              <Copy className="w-5 h-5" />
-            )}
-          </button>
-          <a
-            href={formUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            aria-label="Open form in new tab"
-          >
-            <ExternalLink className="w-5 h-5" />
-          </a>
-        </div>
-      </div>
-      {copied && (
-        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-          Copied to clipboard
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-200 mb-2">
+          Form URL
+        </h3>
+        <p className="text-sm text-gray-700 dark:text-gray-300 font-mono truncate">
+          {formUrl}
         </p>
-      )}
+        {copied && (
+          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+            Copied to clipboard
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={() => copyToClipboard(formUrl)}
+          className="p-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors"
+          aria-label="Copy form URL"
+          title="Copy link"
+        >
+          {copied ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <Copy className="w-5 h-5" />
+          )}
+        </button>
+        <a
+          href={formUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-colors"
+          aria-label="Open form in new tab"
+          title="Open in new tab"
+        >
+          <ExternalLink className="w-5 h-5" />
+        </a>
+      </div>
     </div>
   )
 }

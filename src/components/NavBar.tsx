@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Sparkles, BarChart3, LayoutDashboard } from 'lucide-react'
+import { Sparkles, BarChart3, LayoutDashboard, MessageSquare } from 'lucide-react'
+import UserMenu from './UserMenu'
 
 export default function NavBar() {
   const pathname = usePathname()
@@ -29,30 +30,34 @@ export default function NavBar() {
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
+        <div className="flex items-center gap-4">
+          <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                  transition-all duration-200
-                  ${isActive
-                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
-                  }
-                `}
-              >
-                <Icon className="w-4 h-4" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </nav>
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`
+                    flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                    transition-all duration-200
+                    ${isActive
+                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
+                    }
+                  `}
+                >
+                  <Icon className="w-4 h-4" />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
+
+          <UserMenu />
+        </div>
 
         {/* Mobile menu (simplified - just show active page) */}
         <div className="md:hidden flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">

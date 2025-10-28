@@ -105,61 +105,158 @@ Access comprehensive analytics showing performance by topic and identifying weak
 - FastAPI (Python)
 - Supabase
 - Anthropic Claude
-- SMTP
+- SendGrid / SMTP
+- **Deployed on Railway** for reliable Python hosting
 
 ---
 
-## Installation
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
 - Python 3.10+
-- Supabase account
-- Anthropic API key
-- SMTP credentials
+- Accounts: Supabase, Anthropic, SendGrid (or Gmail)
 
-### Frontend Setup
+### Local Development
 
+**1. Clone and Install**
 ```bash
 git clone https://github.com/Hadeva-Dev/reTeach.git
 cd reTeach
+
+# Install frontend dependencies
 npm install
+
+# Install backend dependencies
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cd ..
+```
+
+**2. Configure Environment**
+```bash
+# Copy example files
 cp .env.example .env.local
-# Edit .env.local with your API URL
+cp backend/.env.example backend/.env
+
+# Edit .env.local and backend/.env with your credentials
+# See Environment Variables section below
+```
+
+**3. Start Development Servers**
+```bash
+# Terminal 1: Start backend
+cd backend
+source venv/bin/activate
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2: Start frontend
 npm run dev
 ```
 
-### Backend Setup
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with your credentials
-uvicorn app.main:app --reload --port 8000
-```
+Visit [http://localhost:3000](http://localhost:3000)
 
 ---
 
 ## Environment Variables
 
-**Frontend (.env.local)**
+### Frontend (`.env.local`)
+
+Copy `.env.example` and fill in:
+
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Backend API
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+
+# SendGrid (optional for frontend)
+SENDGRID_API_KEY=your_sendgrid_key
+FROM_EMAIL=your_email@domain.com
+
+# Google OAuth (optional)
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
 ```
 
-**Backend (.env)**
+### Backend (`backend/.env`)
+
+Copy `backend/.env.example` and fill in:
+
 ```bash
+# Supabase
 SUPABASE_URL=your_supabase_url
 SUPABASE_KEY=your_supabase_anon_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-BOT_EMAIL=your_email@gmail.com
-BOT_PASSWORD=your_app_password
+
+# Anthropic
+ANTHROPIC_API_KEY=your_anthropic_key
+
+# SendGrid (recommended for production)
+SENDGRID_API_KEY=your_sendgrid_key
+FROM_EMAIL=your_email@domain.com
+
+# Frontend URL (for generating shareable links)
+FRONTEND_URL=http://localhost:3000
+
+# CORS (add your frontend URL)
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# Application Settings
+ENVIRONMENT=development
+DEBUG=true
+```
+
+**Note**: For Gmail SMTP alternative (development only), see `backend/.env.example`
+
+---
+
+## Deployment
+
+### Production Deployment
+
+reTeach is designed for:
+- **Frontend**: Vercel (Next.js optimized)
+- **Backend**: Railway (Python friendly)
+
+📖 **Full deployment guide**: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Quick Deploy Buttons
+
+Frontend (Vercel):
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Hadeva-Dev/reTeach)
+
+Backend (Railway):
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template)
+
+**Important**: After deploying, see [SECURITY_NOTICE.md](./SECURITY_NOTICE.md) for credential management
+
+---
+
+## Project Structure
+
+```
+reTeach/
+├── src/                    # Next.js frontend
+│   ├── app/               # App router pages
+│   ├── components/        # React components
+│   └── lib/              # Utilities & API client
+├── backend/               # FastAPI backend
+│   └── app/
+│       ├── routers/      # API endpoints
+│       ├── services/     # Business logic
+│       ├── models/       # Data models
+│       └── utils/        # Helpers
+├── public/               # Static assets
+├── .env.example          # Frontend env template
+├── backend/.env.example  # Backend env template
+├── DEPLOYMENT.md        # Deployment guide
+└── SECURITY_NOTICE.md   # Security checklist
 ```
 
 ---

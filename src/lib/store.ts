@@ -8,6 +8,12 @@ interface Store {
   formSlug: string | null
   formId: string | null
 
+  // Onboarding state
+  onboardingStep: number
+  onboardingCompleted: boolean
+  onboardingSkipped: boolean
+  courseName: string | null
+
   setTopics: (topics: Topic[]) => void
   setQuestions: (questions: Question[]) => void
   setPublishInfo: (info: { formUrl: string; formSlug: string; formId: string | null }) => void
@@ -19,6 +25,13 @@ interface Store {
 
   updateQuestion: (questionId: string, updates: Partial<Question>) => void
   removeQuestion: (questionId: string) => void
+
+  // Onboarding actions
+  setOnboardingStep: (step: number) => void
+  completeOnboarding: () => void
+  skipOnboarding: () => void
+  resetOnboarding: () => void
+  setCourseName: (name: string) => void
 }
 
 export const useStore = create<Store>((set) => ({
@@ -27,6 +40,12 @@ export const useStore = create<Store>((set) => ({
   formUrl: null,
   formSlug: null,
   formId: null,
+
+  // Onboarding state
+  onboardingStep: 0,
+  onboardingCompleted: false,
+  onboardingSkipped: false,
+  courseName: null,
 
   setTopics: (topics) => set({ topics }),
   setQuestions: (questions) => set({ questions }),
@@ -76,4 +95,25 @@ export const useStore = create<Store>((set) => ({
   removeQuestion: (questionId) => set((state) => ({
     questions: state.questions.filter(q => q.id !== questionId)
   })),
+
+  // Onboarding actions
+  setOnboardingStep: (step) => set({ onboardingStep: step }),
+
+  completeOnboarding: () => set({
+    onboardingCompleted: true,
+    onboardingStep: 4
+  }),
+
+  skipOnboarding: () => set({
+    onboardingSkipped: true,
+    onboardingCompleted: false
+  }),
+
+  resetOnboarding: () => set({
+    onboardingStep: 0,
+    onboardingCompleted: false,
+    onboardingSkipped: false
+  }),
+
+  setCourseName: (name) => set({ courseName: name }),
 }))

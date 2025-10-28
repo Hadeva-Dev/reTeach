@@ -38,11 +38,18 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
+    # Frontend URL for generating shareable links
+    frontend_url: str = "http://localhost:3000"
+
     # Email/SMTP Configuration
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
     bot_email: str = ""
     bot_password: str = ""
+
+    # SendGrid Configuration (preferred for production)
+    sendgrid_api_key: str = ""
+    from_email: str = ""
 
     @property
     def cors_origins_list(self) -> List[str]:

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Eye, Trash2, Loader2 } from 'lucide-react'
+import { Search, Eye, Trash2, Loader2, Copy, Check } from 'lucide-react'
 import type { DiagnosticRow } from '@/lib/schema'
 
 interface DiagnosticsTableProps {
@@ -21,6 +21,7 @@ export default function DiagnosticsTable({
   deletingId
 }: DiagnosticsTableProps) {
   const [search, setSearch] = useState('')
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
 
   const filteredRows = useMemo(() => {
     if (!search) return rows
@@ -32,6 +33,19 @@ export default function DiagnosticsTable({
     if (pct > 80) return 'text-green-600 dark:text-green-400'
     if (pct >= 60) return 'text-amber-600 dark:text-amber-400'
     return 'text-red-600 dark:text-red-400'
+  }
+
+  const handleCopyShareLink = async (e: React.MouseEvent, slug: string) => {
+    e.stopPropagation()
+    const shareUrl = `${window.location.origin}/form/${slug}`
+
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopiedSlug(slug)
+      setTimeout(() => setCopiedSlug(null), 2000)
+    } catch (error) {
+      console.error('Failed to copy link:', error)
+    }
   }
 
   return (
@@ -63,7 +77,7 @@ export default function DiagnosticsTable({
                 Name
               </th>
               <th className="text-center py-3 px-6 text-sm font-medium text-gray-600 dark:text-gray-400">
-                Completion %
+                Avg Score
               </th>
               <th className="text-left py-3 px-6 text-sm font-medium text-gray-600 dark:text-gray-400">
                 Weak Topic
@@ -93,8 +107,8 @@ export default function DiagnosticsTable({
                 </td>
                 <td className="py-4 px-6 text-center">
                   <div className="inline-flex flex-col items-center gap-1">
-                    <p className={`text-lg font-semibold ${getCompletionColor(row.completionPct)}`}>
-                      {row.completionPct}%
+                    <p className={`text-lg font-semibold ${getCompletionColor(row.avgScore ?? 0)}`}>
+                      {row.avgScore !== undefined ? `${Math.round(row.avgScore)}%` : '—'}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-500">
                       {row.responses} students
@@ -119,6 +133,18 @@ export default function DiagnosticsTable({
                 </td>
                 <td className="py-4 px-6">
                   <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={(e) => handleCopyShareLink(e, row.slug)}
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      aria-label={`Copy share link for ${row.name}`}
+                      title="Copy share link"
+                    >
+                      {copiedSlug === row.slug ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
                     {onDelete && (
                       <button
                         onClick={(e) => {
@@ -177,8 +203,8 @@ export default function DiagnosticsTable({
                 </p>
               </div>
               <div className="text-right ml-4">
-                <p className={`text-xl font-semibold ${getCompletionColor(row.completionPct)}`}>
-                  {row.completionPct}%
+                <p className={`text-xl font-semibold ${getCompletionColor(row.avgScore ?? 0)}`}>
+                  {row.avgScore !== undefined ? `${Math.round(row.avgScore)}%` : '—'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-500">
                   {row.responses} students
@@ -201,6 +227,17 @@ export default function DiagnosticsTable({
                 )}
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => handleCopyShareLink(e, row.slug)}
+                  className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                  aria-label={`Copy share link for ${row.name}`}
+                >
+                  {copiedSlug === row.slug ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
                 {onDelete && (
                   <button
                     onClick={(e) => {

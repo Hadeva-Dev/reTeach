@@ -86,7 +86,22 @@ Thumbs.db
 # Security - prevent credential exposure
 # Only ignore actual credential files, not source code
 .env*
+!.env.example
 env.*
 setup-env.sh
 CREDENTIALS.md
 *.pem
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/.cache/
+backend/uploads/
+
+# Keep example files
+!.env.example
+!backend/.env.example

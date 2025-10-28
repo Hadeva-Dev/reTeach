@@ -5,15 +5,17 @@ Endpoints for creating, publishing, and managing shareable diagnostic forms
 
 from fastapi import APIRouter, HTTPException, Request
 from typing import List, Optional, Dict
-from pydantic import BaseModel, EmailStr, Field, ValidationError
+from pydantic import BaseModel, EmailStr, Field, ValidationError, field_validator
 from uuid import UUID, uuid4
 from datetime import datetime
+import html
 
 from app.models.question import Question
 from app.database import db
 from app.utils.slug_generator import generate_slug
 from app.services.email_service import get_email_service
 from app.services.khan_academy_service import get_khan_academy_service
+from app.config import settings
 
 router = APIRouter(prefix="/api/forms", tags=["forms"])
 
@@ -25,10 +27,18 @@ router = APIRouter(prefix="/api/forms", tags=["forms"])
 class PublishFormRequest(BaseModel):
     """Request to publish a new diagnostic form"""
     title: str = Field(..., min_length=1, max_length=255)
-    questions: List[Question] = Field(..., min_length=1)
-    course_id: Optional[str] = Field(None, description="Associated course ID")
+    questions: List[Question] = Field(..., min_length=1, max_length=100)
+    course_id: Optional[str] = Field(None, description="Associated course ID", max_length=100)
     teacher_email: Optional[EmailStr] = Field(None, description="Teacher email (for tracking)")
-    teacher_name: Optional[str] = Field(None, description="Teacher name")
+    teacher_name: Optional[str] = Field(None, description="Teacher name", max_length=255)
+
+    @field_validator('title', 'course_id', 'teacher_name')
+    @classmethod
+    def sanitize_text(cls, v: Optional[str]) -> Optional[str]:
+        """Sanitize text fields to prevent XSS"""
+        if v is None:
+            return None
+        return html.escape(v.strip())
 
 
 class PublishFormResponse(BaseModel):
@@ -69,6 +79,12 @@ class StudentInfo(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     email: EmailStr
 
+    @field_validator('name')
+    @classmethod
+    def sanitize_name(cls, v: str) -> str:
+        """Sanitize name to prevent XSS"""
+        return html.escape(v.strip())
+
 
 class StartSessionResponse(BaseModel):
     """Response after starting a session"""
@@ -80,14 +96,14 @@ class StartSessionResponse(BaseModel):
 
 class SubmitAnswer(BaseModel):
     """Single answer submission"""
-    question_id: str
-    selected_index: int  # Changed from selected_option_index to match frontend
+    question_id: str = Field(..., max_length=100)
+    selected_index: int = Field(..., ge=0, le=5, description="Selected answer (0-5 for up to 6 options)")
 
 
 class SubmitFormRequest(BaseModel):
     """Complete form submission"""
-    session_id: str
-    answers: List[SubmitAnswer]
+    session_id: str = Field(..., max_length=100)
+    answers: List[SubmitAnswer] = Field(..., max_length=200)
 
 
 class SubmitFormResponse(BaseModel):
@@ -255,9 +271,8 @@ async def publish_form(request: PublishFormRequest):
                 "order_index": idx
             }).execute()
 
-        # Build shareable URL
-        base_url = "http://localhost:3000"  # TODO: Get from env
-        url = f"{base_url}/form/{slug}"
+        # Build shareable URL from environment
+        url = f"{settings.frontend_url}/form/{slug}"
 
         return PublishFormResponse(
             form_id=str(form_uuid),
@@ -759,7 +774,7 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
         for answer in submission.answers:
             # Get question details from questions table
             question_result = db.client.table("questions")\
-                .select("id, question_id, topic_id, answer_index")\
+                .select("id, question_id, topic_id, answer_index, options")\
                 .eq("question_id", answer.question_id)\
                 .execute()
 
@@ -771,6 +786,15 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
             question_uuid = question["id"]
             topic_id = question["topic_id"]
             correct_answer_index = question["answer_index"]
+            options = question.get("options", [])
+
+            # Validate selected_index is within bounds of options
+            if answer.selected_index >= len(options):
+                print(f"[FORMS WARNING] Invalid selected_index {answer.selected_index} for question {answer.question_id} with {len(options)} options")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid answer index {answer.selected_index} for question {answer.question_id}"
+                )
 
             # Check if answer is correct
             is_correct = answer.selected_index == correct_answer_index
@@ -806,6 +830,36 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
             "correct_answers": correct_count,
             "score_percentage": score
         }).eq("id", session_uuid).execute()
+
+        # Link student to teacher (if teacher exists for this form)
+        if student_id:
+            try:
+                # Get teacher_id from form
+                form_teacher_result = db.client.table("forms")\
+                    .select("teacher_id")\
+                    .eq("id", form_uuid)\
+                    .execute()
+
+                if form_teacher_result.data and form_teacher_result.data[0].get("teacher_id"):
+                    teacher_id = form_teacher_result.data[0]["teacher_id"]
+
+                    # Check if relationship already exists
+                    existing_link = db.client.table("teacher_students")\
+                        .select("id")\
+                        .eq("teacher_id", teacher_id)\
+                        .eq("student_id", student_id)\
+                        .execute()
+
+                    # Create link if it doesn't exist (prevents duplicates)
+                    if not existing_link.data:
+                        db.client.table("teacher_students").insert({
+                            "teacher_id": teacher_id,
+                            "student_id": student_id
+                        }).execute()
+                        print(f"[FORMS] Linked student {student_id} to teacher {teacher_id}")
+            except Exception as link_error:
+                # Don't fail submission if linking fails
+                print(f"[FORMS WARNING] Failed to link student to teacher: {link_error}")
 
         print(f"[FORMS] Form submission complete")
 
@@ -898,82 +952,6 @@ async def get_form_stats(slug: str):
     except Exception as e:
         print(f"[FORMS] Error fetching stats for form {slug}: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch form stats")
-
-
-@router.get("/{slug}/stats")
-async def get_form_stats(slug: str):
-    """
-    Get topic-level statistics for a form by slug
-
-    Args:
-        slug: Form slug
-
-    Returns:
-        Topic statistics with response counts and correctness percentages
-    """
-    try:
-        # Get form by slug
-        form_result = db.client.table("forms")\
-            .select("id")\
-            .eq("slug", slug)\
-            .execute()
-
-        if not form_result.data:
-            raise HTTPException(status_code=404, detail="Form not found")
-
-        form_uuid = form_result.data[0]["id"]
-
-        # Get topic statistics from responses
-        # Group by topic and calculate correct percentage
-        responses = db.client.table("responses")\
-            .select("topic_id, is_correct, topics(name)")\
-            .eq("form_id", form_uuid)\
-            .execute()
-
-        if not responses.data:
-            return {"topics": []}
-
-        # Aggregate by topic
-        topic_stats = {}
-        for response in responses.data:
-            topic_id = response["topic_id"]
-            topic_name = response["topics"]["name"] if response.get("topics") else "Unknown Topic"
-            is_correct = response["is_correct"]
-
-            if topic_id not in topic_stats:
-                topic_stats[topic_id] = {
-                    "topic_name": topic_name,
-                    "total_responses": 0,
-                    "correct_responses": 0
-                }
-
-            topic_stats[topic_id]["total_responses"] += 1
-            if is_correct:
-                topic_stats[topic_id]["correct_responses"] += 1
-
-        # Calculate percentages
-        result_topics = []
-        for topic_id, stats in topic_stats.items():
-            correct_pct = (stats["correct_responses"] / stats["total_responses"] * 100) if stats["total_responses"] > 0 else 0
-            result_topics.append({
-                "topic_name": stats["topic_name"],
-                "total_responses": stats["total_responses"],
-                "correct_responses": stats["correct_responses"],
-                "correct_percentage": round(correct_pct, 1)
-            })
-
-        # Sort by topic name
-        result_topics.sort(key=lambda x: x["topic_name"])
-
-        return {"topics": result_topics}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[FORMS] Error fetching stats: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{form_id}/responses")

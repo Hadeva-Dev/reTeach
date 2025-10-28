@@ -2,7 +2,7 @@
 
 from enum import Enum
 from typing import List, Optional
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Difficulty(str, Enum):
@@ -17,31 +17,32 @@ class Question(BaseModel):
     Multiple-choice question
     Matches API contract exactly
     """
-    id: str = Field(..., description="Unique question identifier (e.g., 'q_001')")
-    topic: str = Field(..., description="Topic this question tests")
-    stem: str = Field(..., min_length=5, description="Question text")
+    id: str = Field(..., max_length=100, description="Unique question identifier (e.g., 'q_001')")
+    topic: str = Field(..., max_length=255, description="Topic this question tests")
+    stem: str = Field(..., min_length=5, max_length=2000, description="Question text")
     options: List[str] = Field(..., min_length=2, max_length=6, description="Answer choices")
-    answerIndex: int = Field(..., ge=0, description="0-based index of correct answer")
-    rationale: str = Field(..., description="Explanation of correct answer")
+    answerIndex: int = Field(..., ge=0, le=5, description="0-based index of correct answer (max 5 for 6 options)")
+    rationale: str = Field(..., max_length=2000, description="Explanation of correct answer")
     difficulty: Difficulty = Field(..., description="Question difficulty level")
-    bloom: str = Field(..., description="Bloom's taxonomy level")
+    bloom: str = Field(..., max_length=50, description="Bloom's taxonomy level")
 
-    @field_validator("answerIndex")
+    @field_validator("options")
     @classmethod
-    def validate_answer_index(cls, v: int, info) -> int:
-        """Ensure answerIndex is within bounds of options array"""
-        # Note: 'options' may not be available yet during validation
-        # This will be checked again in the service layer
-        if v < 0:
-            raise ValueError("answerIndex must be non-negative")
+    def validate_option_lengths(cls, v: List[str]) -> List[str]:
+        """Ensure each option is within reasonable length"""
+        for option in v:
+            if len(option) > 500:
+                raise ValueError("Each option must be 500 characters or less")
         return v
 
-    def validate_answer_bounds(self) -> None:
-        """Validate that answerIndex is valid for options"""
+    @model_validator(mode='after')
+    def validate_answer_index_bounds(self) -> 'Question':
+        """Ensure answerIndex is within bounds of options array"""
         if self.answerIndex >= len(self.options):
             raise ValueError(
                 f"answerIndex {self.answerIndex} out of bounds for {len(self.options)} options"
             )
+        return self
 
 
 class GenerateQuestionsRequest(BaseModel):

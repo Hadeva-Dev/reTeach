@@ -23,10 +23,10 @@ import {
 import { fetchResults } from '@/lib/api'
 import type { TopicStat } from '@/lib/schema'
 
-const barGradientForValue = (value: number) => {
-  if (value >= 80) return 'url(#resultsGradientHigh)'
-  if (value >= 60) return 'url(#resultsGradientMid)'
-  return 'url(#resultsGradientLow)'
+const barColorForValue = (value: number) => {
+  if (value >= 80) return '#10b981' // green
+  if (value >= 60) return '#f59e0b' // amber
+  return '#ef4444' // red
 }
 
 function ResultsPageContent() {
@@ -69,15 +69,8 @@ function ResultsPageContent() {
   }, [loadResults])
 
   const totalResponses = useMemo(() => {
-    if (responseCount > 0) {
-      return responseCount
-    }
-    // Calculate actual number of student responses
-    // Each student answers questions for all topics, so divide by number of topics
-    const totalAnswers = stats.reduce((sum, stat) => sum + stat.n, 0)
-    const numTopics = stats.length
-    return numTopics > 0 ? Math.round(totalAnswers / numTopics) : 0
-  }, [responseCount, stats])
+    return responseCount
+  }, [responseCount])
 
   const averageScore = useMemo(() => {
     if (stats.length === 0) return 0
@@ -157,14 +150,14 @@ function ResultsPageContent() {
             className="space-y-6"
           >
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-3xl border border-indigo-100 dark:border-indigo-500/30 bg-indigo-50/60 dark:bg-indigo-500/10 px-5 py-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700 dark:text-indigo-200">
+              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
                   Average Score
                 </p>
-                <p className="mt-2 text-3xl font-semibold text-indigo-700 dark:text-indigo-200">
+                <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
                   {averageScore.toFixed(1)}%
                 </p>
-                <p className="mt-2 flex items-center gap-2 text-xs text-indigo-900/70 dark:text-indigo-100/70">
+                <p className="mt-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <Target className="w-4 h-4" />
                   Top Topic: {strongestTopic?.topic ?? '—'}
                 </p>
@@ -181,14 +174,14 @@ function ResultsPageContent() {
                   Across all topics in this diagnostic
                 </p>
               </div>
-              <div className="rounded-3xl border border-amber-200/70 dark:border-amber-500/30 bg-amber-50 px-5 py-4 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-5 py-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
                   Needs Attention
                 </p>
-                <p className="mt-2 text-3xl font-semibold text-amber-700">
+                <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
                   {weakestTopic?.topic ?? '—'}
                 </p>
-                <p className="mt-2 flex items-center gap-2 text-xs text-amber-700/80">
+                <p className="mt-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                   <AlertTriangle className="w-4 h-4" />
                   Avg score {weakestTopic ? `${weakestTopic.correctPct.toFixed(1)}%` : 'n/a'}
                 </p>
@@ -209,35 +202,19 @@ function ResultsPageContent() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stats} margin={{ top: 16, right: 16, left: 0, bottom: 48 }}>
-                    <defs>
-                      <linearGradient id="resultsGradientHigh" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2563eb" stopOpacity={0.95} />
-                        <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.75} />
-                      </linearGradient>
-                      <linearGradient id="resultsGradientMid" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.95} />
-                        <stop offset="100%" stopColor="#f97316" stopOpacity={0.7} />
-                      </linearGradient>
-                      <linearGradient id="resultsGradientLow" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#facc15" stopOpacity={0.65} />
-                      </linearGradient>
-                    </defs>
                     <XAxis
                       dataKey="topic"
                       textAnchor="middle"
                       height={70}
-                      tick={{ fill: '#9ca3af', fontSize: 11 }}
+                      tick={false}
                       tickLine={false}
                       axisLine={{ stroke: '#e5e7eb' }}
-                      label={{ value: 'Topics', position: 'insideBottom', offset: -40, style: { fill: '#6b7280', fontSize: 12 } }}
                     />
                     <YAxis
                       domain={[0, 100]}
                       tick={{ fill: '#9ca3af', fontSize: 12 }}
                       tickLine={false}
                       axisLine={{ stroke: '#e5e7eb' }}
-                      label={{ value: 'Avg Score %', angle: -90, position: 'insideLeft', style: { fill: '#6b7280', fontSize: 12 } }}
                     />
                     <Tooltip
                       cursor={{ fill: 'transparent' }}
@@ -249,10 +226,11 @@ function ResultsPageContent() {
                         boxShadow: '0 16px 40px rgba(15,23,42,0.12)'
                       }}
                       formatter={(value: number) => [`${value.toFixed(1)}%`, 'Correct']}
+                      labelFormatter={(label: string) => label}
                     />
-                    <Bar dataKey="correctPct" radius={[10, 10, 0, 0]} barSize={28}>
+                    <Bar dataKey="correctPct" barSize={28}>
                       {stats.map((stat, index) => (
-                        <Cell key={`cell-${index}`} fill={barGradientForValue(stat.correctPct)} />
+                        <Cell key={`cell-${index}`} fill={barColorForValue(stat.correctPct)} />
                       ))}
                     </Bar>
                   </BarChart>

@@ -1,6 +1,7 @@
 """
 Email Service for Backend
 Wrapper around the email service to send diagnostic results to students
+Supports both SMTP (Gmail) and SendGrid for flexibility
 """
 
 import smtplib
@@ -18,6 +19,11 @@ class BackendEmailService:
         self.smtp_port = settings.smtp_port
         self.bot_email = settings.bot_email
         self.bot_password = settings.bot_password
+        self.sendgrid_api_key = settings.sendgrid_api_key
+        self.from_email = settings.from_email
+
+        # Prefer SendGrid if API key is configured
+        self.use_sendgrid = bool(self.sendgrid_api_key)
 
     def send_diagnostic_results(
         self,
@@ -119,7 +125,58 @@ This is an automated message. Please do not reply to this email.
         return body
 
     def _send_email(self, to: str, subject: str, body: str) -> Dict[str, any]:
-        """Send email via SMTP"""
+        """Send email via SendGrid API or SMTP fallback"""
+        if self.use_sendgrid:
+            return self._send_via_sendgrid(to, subject, body)
+        else:
+            return self._send_via_smtp(to, subject, body)
+
+    def _send_via_sendgrid(self, to: str, subject: str, body: str) -> Dict[str, any]:
+        """Send email via SendGrid API"""
+        try:
+            import httpx
+
+            from_email = self.from_email or "noreply@reteach.app"
+
+            data = {
+                "personalizations": [{
+                    "to": [{"email": to}],
+                    "subject": subject
+                }],
+                "from": {"email": from_email, "name": "reTeach"},
+                "content": [{
+                    "type": "text/plain",
+                    "value": body
+                }]
+            }
+
+            headers = {
+                "Authorization": f"Bearer {self.sendgrid_api_key}",
+                "Content-Type": "application/json"
+            }
+
+            with httpx.Client() as client:
+                response = client.post(
+                    "https://api.sendgrid.com/v3/mail/send",
+                    json=data,
+                    headers=headers,
+                    timeout=10.0
+                )
+
+            if response.status_code in [200, 201, 202]:
+                print(f"[EMAIL] Successfully sent via SendGrid to {to}")
+                return {'success': True, 'to': to, 'method': 'sendgrid'}
+            else:
+                error_msg = f"SendGrid API error: {response.status_code} - {response.text}"
+                print(f"[EMAIL ERROR] {error_msg}")
+                return {'success': False, 'to': to, 'error': error_msg}
+
+        except Exception as e:
+            print(f"[EMAIL ERROR] SendGrid failed for {to}: {e}")
+            return {'success': False, 'to': to, 'error': str(e)}
+
+    def _send_via_smtp(self, to: str, subject: str, body: str) -> Dict[str, any]:
+        """Send email via SMTP (Gmail fallback)"""
         try:
             # Create message
             msg = MIMEMultipart()
@@ -134,11 +191,11 @@ This is an automated message. Please do not reply to this email.
                 server.login(self.bot_email, self.bot_password)
                 server.send_message(msg)
 
-            print(f"[EMAIL] Successfully sent to {to}")
-            return {'success': True, 'to': to}
+            print(f"[EMAIL] Successfully sent via SMTP to {to}")
+            return {'success': True, 'to': to, 'method': 'smtp'}
 
         except Exception as e:
-            print(f"[EMAIL ERROR] Failed to send to {to}: {e}")
+            print(f"[EMAIL ERROR] SMTP failed for {to}: {e}")
             return {'success': False, 'to': to, 'error': str(e)}
 
     def verify_connection(self) -> bool:

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToasterProvider } from '@/components/ui/Toaster'
+import { Providers } from '@/components/Providers'
+import { headers } from 'next/headers'
+import Script from 'next/script'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -69,16 +72,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get nonce from headers (set by middleware)
+  const headersList = await headers()
+  const nonce = headersList.get('x-nonce') || ''
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
+      <head suppressHydrationWarning>
         <script
           type="application/ld+json"
+          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
@@ -111,11 +120,15 @@ export default function RootLayout({
         />
         {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <>
-            <script
-              async
+            <Script
+              strategy="afterInteractive"
               src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+              nonce={nonce}
             />
-            <script
+            <Script
+              id="google-analytics"
+              strategy="afterInteractive"
+              nonce={nonce}
               dangerouslySetInnerHTML={{
                 __html: `
                   window.dataLayer = window.dataLayer || [];
@@ -132,9 +145,11 @@ export default function RootLayout({
         )}
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <ToasterProvider>
-          {children}
-        </ToasterProvider>
+        <Providers>
+          <ToasterProvider>
+            {children}
+          </ToasterProvider>
+        </Providers>
       </body>
     </html>
   );
