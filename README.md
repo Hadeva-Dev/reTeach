@@ -13,7 +13,7 @@
   ### Intelligent diagnostic assessment platform for educators
 
   **🚀 Deployed on Vercel** - Experience blazing-fast performance and seamless scalability
-
+</div>
 
 Transform your course syllabus into personalized diagnostic assessments in minutes. Using AI, reTeach generates topic-specific questions, analyzes student performance, and automatically sends tailored study resources via email.
 
