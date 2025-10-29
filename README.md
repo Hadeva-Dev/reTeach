@@ -13,17 +13,7 @@
   ### Intelligent diagnostic assessment platform for educators
 
   **🚀 Deployed on Vercel** - Experience blazing-fast performance and seamless scalability
-</div>
 
-<div align="center">
-  <a href="https://moonshot.hackclub.com" target="_blank">
-    <img
-      src="https://hc-cdn.hel1.your-objectstorage.com/s/v3/35ad2be8c916670f3e1ac63c1df04d76a4b337d1_moonshot.png"
-      alt="This project is part of Moonshot, a 4-day hackathon in Florida visiting Kennedy Space Center and Universal Studios!"
-      style="width: 100%;"
-    />
-  </a>
-</div>
 
 Transform your course syllabus into personalized diagnostic assessments in minutes. Using AI, reTeach generates topic-specific questions, analyzes student performance, and automatically sends tailored study resources via email.
 
