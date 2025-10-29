@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' data: https: blob:;
     font-src 'self' https://fonts.gstatic.com;
-    connect-src 'self' http://localhost:8000 https://api.reteach.works https://reteach.works https://www.google-analytics.com https://analytics.google.com;
+    connect-src 'self' http://localhost:8000 https://api.reteach.works https://reteach.works https://reteach-production.up.railway.app https://www.google-analytics.com https://analytics.google.com;
     frame-src 'self' https://accounts.google.com;
     object-src 'none';
     base-uri 'self';
