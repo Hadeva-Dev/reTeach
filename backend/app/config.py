@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     # Anthropic Claude
     anthropic_api_key: str
-    anthropic_model: str = "claude-3-5-sonnet-20241022"  # Latest Sonnet
+    anthropic_model: str = "claude-sonnet-4-5"  # Claude Sonnet 4.5 (latest)
 
     # Caching
     cache_dir: Path = Path(".cache")
