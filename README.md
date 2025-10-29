@@ -220,21 +220,10 @@ DEBUG=true
 
 ### Production Deployment
 
-reTeach is designed for:
+reTeach is designed with:
 - **Frontend**: Vercel (Next.js optimized)
 - **Backend**: Railway (Python friendly)
 
-📖 **Full deployment guide**: [DEPLOYMENT.md](./DEPLOYMENT.md)
-
-### Quick Deploy Buttons
-
-Frontend (Vercel):
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Hadeva-Dev/reTeach)
-
-Backend (Railway):
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template)
-
-**Important**: After deploying, see [SECURITY_NOTICE.md](./SECURITY_NOTICE.md) for credential management
 
 ---
 
