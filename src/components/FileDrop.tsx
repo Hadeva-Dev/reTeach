@@ -35,14 +35,8 @@ export default function FileDrop({ onText }: FileDropProps) {
         // Dynamically import pdfjs-dist
         const pdfjsLib = await import('pdfjs-dist')
 
-        // Set worker source to use npm package
-        if (typeof window !== 'undefined') {
-          const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs')
-          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-            'pdfjs-dist/build/pdf.worker.mjs',
-            import.meta.url
-          ).toString()
-        }
+        // Set worker source - use CDN for reliability
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
 
         // Convert file to ArrayBuffer
         const arrayBuffer = await file.arrayBuffer()

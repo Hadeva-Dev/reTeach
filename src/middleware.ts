@@ -23,12 +23,13 @@ export function middleware(request: NextRequest) {
   // Note: 'unsafe-eval' is needed for Next.js dev mode and React Server Components
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' ${isDevelopment ? "'unsafe-eval'" : "'strict-dynamic'"} https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com;
+    script-src 'self' 'nonce-${nonce}' ${isDevelopment ? "'unsafe-eval'" : "'strict-dynamic'"} https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://cdnjs.cloudflare.com;
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' data: https: blob:;
     font-src 'self' https://fonts.gstatic.com;
     connect-src 'self' http://localhost:8000 https://api.reteach.works https://reteach.works https://reteach-production.up.railway.app https://www.google-analytics.com https://analytics.google.com;
     frame-src 'self' https://accounts.google.com;
+    worker-src 'self' blob: https://cdnjs.cloudflare.com;
     object-src 'none';
     base-uri 'self';
   `.replace(/\s{2,}/g, ' ').trim()
