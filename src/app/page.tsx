@@ -42,7 +42,13 @@ export default function LandingPage() {
   }, [])
 
   const handleGetStarted = () => {
-    router.push('/login')
+    const envMode = process.env.NEXT_PUBLIC_ENV_MODE
+    if (envMode === 'production') {
+      router.push('/login')
+    } else {
+      // Development mode - go to localhost login
+      window.location.href = 'http://localhost:3000/login'
+    }
   }
 
   return (
