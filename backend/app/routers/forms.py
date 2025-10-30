@@ -881,7 +881,7 @@ async def submit_form(slug: str, submission: SubmitFormRequest):
             score_percentage=score,
             correct_answers=correct_count,
             total_questions=total_questions,
-            message="Thank you for completing the diagnostic!"
+            message="Thank you for completing the diagnostic! Check your email (including spam folder) for personalized study resources."
         )
 
     except HTTPException:
