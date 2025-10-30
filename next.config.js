@@ -15,24 +15,12 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   serverExternalPackages: ['crypto'],
-  webpack: (config, { isServer }) => {
-    // Fix for pdfjs-dist worker
+  webpack: (config) => {
+    // Fix for pdfjs-dist - disable canvas
     config.resolve.alias = {
       ...config.resolve.alias,
       canvas: false,
     }
-
-    // Copy PDF.js worker to public folder
-    if (!isServer) {
-      config.module.rules.push({
-        test: /pdf\.worker\.(min\.)?mjs$/,
-        type: 'asset/resource',
-        generator: {
-          filename: 'static/worker/[name].[hash][ext]'
-        }
-      })
-    }
-
     return config
   },
   // Skip build-time route analysis
