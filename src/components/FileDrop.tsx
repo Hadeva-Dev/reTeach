@@ -35,9 +35,8 @@ export default function FileDrop({ onText }: FileDropProps) {
         // Dynamically import pdfjs-dist
         const pdfjsLib = await import('pdfjs-dist')
 
-        // Set worker source - import directly from node_modules
-        const workerSrc = await import('pdfjs-dist/build/pdf.worker.min.mjs?url')
-        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc.default
+        // Use unpkg CDN as fallback - works everywhere
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
         // Convert file to ArrayBuffer
         const arrayBuffer = await file.arrayBuffer()
