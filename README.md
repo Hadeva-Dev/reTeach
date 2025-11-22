@@ -13,9 +13,25 @@
   ### Intelligent diagnostic assessment platform for educators
 
   **🚀 Deployed on Vercel** - Experience blazing-fast performance and seamless scalability
+
+  **[Try Live Demo](https://reteach.vercel.app)** | **[Watch Video Demo](#)**
 </div>
 
 Transform your course syllabus into personalized diagnostic assessments in minutes. Using AI, reTeach generates topic-specific questions, analyzes student performance, and automatically sends tailored study resources via email.
+
+---
+
+## Why reTeach?
+
+Teachers spend **countless hours** creating diagnostic assessments to identify student knowledge gaps, then even more time finding appropriate resources for each struggling student. This manual process is time-consuming, inconsistent, and often delayed.
+
+reTeach automates this entire workflow:
+- **Saves Time**: What takes hours manually now takes minutes
+- **Personalized Learning**: Every student receives targeted resources for their specific weak areas
+- **Data-Driven**: Teachers get instant analytics on class-wide knowledge gaps
+- **Immediate Feedback**: Students receive study materials instantly via email, not days later
+
+Built after conversations with educators who needed a better way to diagnose and support student learning at scale.
 
 ---
 
@@ -88,7 +104,7 @@ Access comprehensive analytics showing performance by topic and identifying weak
 
 ![Results Dashboard](./docs/images/resultsdashboard.png)
 
-![Student Response Analysis](./docs/images/studentresponseanlysis.png)
+![Student Response Analysis](./docs/images/studentresponseanalysis.png)
 
 ---
 
@@ -396,8 +412,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## About the Developers
+
+**reTeach** was created by **Dennis Freyman** and **Hao Lin** for the **2024 Congressional App Challenge**.
+
+We're high school students passionate about using technology to solve real problems in education. After speaking with teachers who struggled with the time-intensive process of creating diagnostic assessments and providing personalized feedback to students, we built reTeach to automate this workflow using AI.
+
+Our goal is to give educators more time to focus on teaching while ensuring every student gets the personalized support they need to succeed.
+
+---
+
 <div align="center">
-  <sub>Built by <a href="https://github.com/zarfix123">Dennis</a> & <a href="https://github.com/jappabl">Hao</a></sub>
+  <sub>Built by <a href="https://github.com/zarfix123">Dennis Freyman</a> & <a href="https://github.com/jappabl">Hao Lin</a></sub>
   <br>
   <sub><a href="https://www.linkedin.com/in/dennis-freyman/">Dennis on LinkedIn</a> • <a href="https://www.linkedin.com/in/haolinpacific/">Hao on LinkedIn</a></sub>
+  <br><br>
+  <sub>Created for the Congressional App Challenge 2024</sub>
 </div>
