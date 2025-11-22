@@ -110,6 +110,139 @@ Access comprehensive analytics showing performance by topic and identifying weak
 
 ---
 
+## App Architecture
+
+reTeach follows a modern full-stack architecture with clear separation between frontend, backend, and external services.
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         CLIENT LAYER                            │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │           Next.js 15 Frontend (Vercel)                   │  │
+│  │  • React Server Components                               │  │
+│  │  • TypeScript + Tailwind CSS                             │  │
+│  │  • Client-side routing & state management                │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ HTTP/REST
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       API LAYER                                 │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │         FastAPI Backend (Railway)                        │  │
+│  │  • RESTful API endpoints                                 │  │
+│  │  • AI orchestration & business logic                     │  │
+│  │  • Email delivery service                                │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                ┌─────────────┼─────────────┐
+                │             │             │
+                ▼             ▼             ▼
+    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+    │   Supabase   │  │  Anthropic   │  │  SendGrid    │
+    │   Database   │  │    Claude    │  │     SMTP     │
+    │              │  │              │  │              │
+    │  • PostgreSQL│  │  • Syllabus  │  │  • Student   │
+    │  • Auth      │  │    parsing   │  │    feedback  │
+    │  • Storage   │  │  • Question  │  │  • Resource  │
+    │              │  │    generation│  │    delivery  │
+    └──────────────┘  └──────────────┘  └──────────────┘
+       DATA LAYER      AI SERVICES       EMAIL SERVICES
+```
+
+### Data Flow
+
+#### 1. Diagnostic Creation Flow
+```
+Teacher → Upload Syllabus → FastAPI → Claude AI → Extract Topics
+                                  ↓
+                            Store in Supabase
+                                  ↓
+Teacher → Review/Edit Topics → Generate Questions (Claude)
+                                  ↓
+                            Store Assessment in DB
+                                  ↓
+                        Generate Shareable Link/QR
+```
+
+#### 2. Student Assessment Flow
+```
+Student → Access Link → Fetch Questions (Supabase)
+              ↓
+        Answer Questions
+              ↓
+        Submit → FastAPI → Calculate Score by Topic
+                    ↓
+              Store Results (Supabase)
+                    ↓
+              Generate Resources (Khan Academy links)
+                    ↓
+              Send Email (SendGrid) → Student Inbox
+```
+
+#### 3. Results & Analytics Flow
+```
+Teacher → View Results Dashboard → Supabase → Aggregate Performance
+                                         ↓
+                                  Display Charts
+                                  • Topic breakdown
+                                  • Individual responses
+                                  • Weak area identification
+```
+
+### Key Components
+
+**Frontend Architecture**
+- **App Router**: Next.js 15 app directory structure with server/client components
+- **UI Components**: Reusable React components with Tailwind CSS
+- **API Client**: Centralized HTTP client for backend communication
+- **State Management**: React hooks and server-side state
+- **Real-time Updates**: Dynamic data fetching and revalidation
+
+**Backend Architecture**
+- **Router Layer**: FastAPI routers for RESTful endpoints
+  - `/diagnostics`: CRUD operations for assessments
+  - `/syllabus`: AI-powered topic extraction
+  - `/responses`: Student submission handling
+  - `/results`: Analytics and reporting
+- **Service Layer**: Business logic and orchestration
+  - AI service: Claude API integration
+  - Email service: SendGrid/SMTP integration
+  - Database service: Supabase client wrapper
+- **Models Layer**: Pydantic data validation and schemas
+- **Utils**: Helper functions and shared utilities
+
+**Database Schema (Supabase)**
+- `diagnostics`: Assessment metadata and configuration
+- `topics`: Extracted topics with questions
+- `responses`: Student submissions and answers
+- `results`: Calculated scores and performance metrics
+
+### Integration Points
+
+1. **Frontend ↔ Backend**: REST API over HTTP/HTTPS
+2. **Backend ↔ Supabase**: PostgreSQL client via Supabase SDK
+3. **Backend ↔ Claude**: Anthropic API for AI operations
+4. **Backend ↔ SendGrid**: Email API for automated feedback
+5. **Frontend ↔ Supabase**: Direct auth and real-time subscriptions (optional)
+
+### Security & Performance
+
+- **Authentication**: Supabase Auth with JWT tokens
+- **API Security**: CORS configuration, rate limiting, input validation
+- **CDN Delivery**: Vercel edge network for frontend assets
+- **Database**: Connection pooling and query optimization
+- **Caching**: Static generation and revalidation strategies
+- **Error Handling**: Comprehensive error boundaries and API error responses
+
+---
+
 ## Quick Start
 
 ### Prerequisites
