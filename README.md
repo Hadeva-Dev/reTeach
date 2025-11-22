@@ -695,7 +695,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## About the Developers
 
-**reTeach** was created by **Dennis Freyman** and **Hao Lin** for the **2024 Congressional App Challenge**.
+**reTeach** was created by **Dennis Freyman** and **Hao Lin** for the **2025 Congressional App Challenge**.
 
 We're high school students passionate about using technology to solve real problems in education. After speaking with teachers who struggled with the time-intensive process of creating diagnostic assessments and providing personalized feedback to students, we built reTeach to automate this workflow using AI.
 
@@ -708,5 +708,5 @@ Our goal is to give educators more time to focus on teaching while ensuring ever
   <br>
   <sub><a href="https://www.linkedin.com/in/dennis-freyman/">Dennis on LinkedIn</a> • <a href="https://www.linkedin.com/in/haolinpacific/">Hao on LinkedIn</a></sub>
   <br><br>
-  <sub>Created for the Congressional App Challenge 2024</sub>
+  <sub>Created for the Congressional App Challenge 2025</sub>
 </div>
