@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_key: str
 
-    # Anthropic Claude
+    # Anthropic Claude API
     anthropic_api_key: str
     anthropic_model: str = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5 (latest)
 
