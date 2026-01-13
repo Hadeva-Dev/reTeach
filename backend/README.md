@@ -168,7 +168,7 @@ All settings in `.env`:
 | `SUPABASE_URL` | Supabase project URL | Required |
 | `SUPABASE_KEY` | Supabase API key (anon/service_role) | Required |
 | `ANTHROPIC_API_KEY` | Claude API key | Required |
-| `ANTHROPIC_MODEL` | Claude model to use | `claude-3-5-sonnet-20241022` |
+| `ANTHROPIC_MODEL` | Claude model to use | `claude-sonnet-4-5-20250929` |
 | `CACHE_ENABLED` | Enable LLM response caching | `true` |
 | `CACHE_DIR` | Cache directory path | `.cache` |
 | `DEBUG` | Enable debug logging | `true` |
